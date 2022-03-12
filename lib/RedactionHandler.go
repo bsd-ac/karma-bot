@@ -1,0 +1,42 @@
+/*
+ * Copyright (c) 2022 Aisha Tammy <aisha@bsd.ac>
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ *
+ */
+package lib
+
+import (
+	"fmt"
+	"regexp"
+
+	"maunium.net/go/mautrix"
+	"maunium.net/go/mautrix/event"
+)
+
+func RedactionHandler(_ *mautrix.Client, source mautrix.EventSource, evt *event.Event) {
+	fmt.Printf("<%[1]s> %[4]s (%[2]s/%[3]s)\n", evt.Sender, evt.Type.String(), evt.ID, evt.Content.AsMessage().FormattedBody)
+
+	regex_arr := [4]string{`(?i)^thanks\s(.+)$`, `(?i)^thank you\s(.+)$`, `(?i)^(.+):\sthank you$`, `(?i)^(.+):\sthanks$`}
+
+	body := evt.Content.AsMessage().Body
+	for _, pat := range regex_arr {
+		re := regexp.MustCompile(pat)
+		if re.MatchString(body) {
+			person := re.ReplaceAllString(body, "$1")
+			fmt.Printf("person = %v\n", person)
+		} else {
+			fmt.Printf("no person found\n")
+		}
+	}
+}
