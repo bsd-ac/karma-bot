@@ -26,7 +26,6 @@ import (
 )
 
 func MessageHandler(cli *mautrix.Client, source mautrix.EventSource, evt *event.Event) {
-	fmt.Printf("<%[1]s> %[4]s (%[2]s/%[3]s)\n", evt.Sender, evt.Type.String(), evt.ID, evt.Content.AsMessage().FormattedBody)
 
 	regex_arr := [4]string{`(?i)^thanks\s(.+)`, `(?i)^thank you\s(.+)`, `(?i)^(.+):\sthank you`, `(?i)^(.+):\sthanks`}
 

@@ -21,7 +21,6 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"path/filepath"
 
 	"maunium.net/go/mautrix"
 	"maunium.net/go/mautrix/event"
@@ -40,19 +39,20 @@ func main() {
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
-	cfg, _ := lib.ReadConfig(*config)
+	cfg, _, bdbStore := lib.ReadConfig(*config)
+
+	protect.Pledge("stdio unveil rpath wpath cpath flock dns inet tty")
+	protect.Unveil("/etc/resolv.conf", "r")
+	protect.Unveil("/etc/ssl/cert.pem", "r")
+	protect.Unveil(cfg.DBDirectory, "rwxc")
+	protect.UnveilBlock()
 
 	fmt.Printf("Logging into %s as %s\n", cfg.Homeserver, cfg.Username)
 	client, err := mautrix.NewClient(cfg.Homeserver, id.UserID(cfg.Username), cfg.AccessToken)
 	if err != nil {
 		panic(err)
 	}
-
-	protect.Pledge("stdio unveil rpath wpath cpath flock dns inet tty")
-	protect.Unveil("/etc/resolv.conf", "r")
-	protect.Unveil("/etc/ssl/cert.pem", "r")
-	protect.Unveil(filepath.Dir(cfg.Database), "rwx")
-	protect.UnveilBlock()
+	client.Store = bdbStore
 
 	syncer := client.Syncer.(*mautrix.DefaultSyncer)
 	syncer.OnEventType(event.EventMessage, func(source mautrix.EventSource, evt *event.Event) { lib.MessageHandler(client, source, evt) })

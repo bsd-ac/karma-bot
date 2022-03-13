@@ -23,7 +23,6 @@ import (
 	"sort"
 
 	_ "github.com/mattn/go-sqlite3"
-	"maunium.net/go/mautrix/id"
 )
 
 func GetVersion(db *sql.DB) KarmaVersion {
@@ -33,33 +32,6 @@ func GetVersion(db *sql.DB) KarmaVersion {
 		return KarmaVersion{0, 0, 0, nil}
 	}
 	return cver
-}
-
-func InitRoom(db *sql.DB, rID id.RoomID) bool {
-	_, err := db.Query("SELECT * FROM room_tables WHERE room_name = " + rID.String())
-	if err != nil {
-		rID_table_name := RandomString(15)
-		_, err = db.Exec(fmt.Sprintf("INSERT INTO room_tables(room_name, room_table_name) values('%v', '%v');", rID.String(), rID_table_name))
-		if err != nil {
-			fmt.Printf("Error while inserting room_table_name for '%v'\n", rID.String())
-			return false
-		}
-		_, err = db.Exec(fmt.Sprintf("CREATE TABLE IF NOT EXISTS %v LIKE room_table_example;"))
-		if err != nil {
-			fmt.Printf("Error while cloning the default table")
-			return false
-		}
-	}
-	return true
-}
-
-func GetRoomTable(db *sql.DB, room_name string) string {
-	var room_table_name string
-	err := db.QueryRow("SELECT room_table_name FROM room_tables WHERE room_name = " + room_name).Scan(&room_table_name)
-	if err != nil {
-		return ""
-	}
-	return room_table_name
 }
 
 func InitDB(database string) *sql.DB {
@@ -80,6 +52,8 @@ func InitDB(database string) *sql.DB {
 		fmt.Printf("Applying patch version %v.%v.%v\n", kver.Major, kver.Minor, kver.Patch)
 		kver.SQLPatch(db)
 	}
-
+	if db != nil {
+		fmt.Printf("init db is not nil\n")
+	}
 	return db
 }

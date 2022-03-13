@@ -25,9 +25,8 @@ import (
 
 func sqlpatch(db *sql.DB) bool {
 	sqlquery := `CREATE TABLE IF NOT EXISTS version (present BOOL PRIMARY KEY DEFAULT TRUE, major INTEGER NOT NULL, minor INTEGER NOT NULL, patch INTEGER NOT NULL, CONSTRAINT present_uniq CHECK (present));
+CREATE TABLE IF NOT EXISTS votes (senderID STRING NOT NULL, targetID STRING NOT NULL, eventID STRING, roomID STRING, vote INTEGER NOT NULL, PRIMARY KEY(senderID, targetID, eventID, roomID));
 INSERT INTO version(present, major, minor, patch) values(1, 1, 0, 0);
-CREATE TABLE IF NOT EXISTS room_tables (room_name STRING PRIMARY KEY NOT NULL, room_table_name);
-CREATE TABLE IF NOT EXISTS room_table_example (senderID STRING NOT NULL, targetID STRING NOT NULL, eventID STRING NOT NULL, vote INTEGER NOT NULL, PRIMARY KEY(senderID, targetID, eventID));
 `
 	_, err := db.Exec(sqlquery)
 	if err != nil {
