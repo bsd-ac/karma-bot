@@ -75,6 +75,11 @@ func ReadConfig(ConfigFile string) (*ConfigData, error) {
 		return nil, fmt.Errorf("Config file does not have 'AccessToken'")
 	}
 
+	absDBDir, err := filepath.Abs(cfg.DBDirectory)
+	if err != nil {
+		return nil, fmt.Errorf("Could not get absolute path of DBDirectory (%s): %v", cfg.DBDirectory, err)
+	}
+	cfg.DBDirectory = absDBDir
 	dbDirStat, err := os.Stat(cfg.DBDirectory)
 	if os.IsNotExist(err) {
 		return nil, fmt.Errorf("Database directory '%v' does not exist", cfg.DBDirectory)
