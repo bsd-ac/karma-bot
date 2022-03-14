@@ -17,7 +17,11 @@
 package lib
 
 import (
+	"database/sql"
+	"database/sql/driver"
+	"fmt"
 	"math/rand"
+	"reflect"
 	"time"
 )
 
@@ -34,4 +38,24 @@ func RandomStringFromChars(length int, chars string) string {
 
 func RandomString(length int) string {
 	return RandomStringFromChars(length, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
+}
+
+var sqlDriverMap map[reflect.Type] string
+func SQLDriverName(driver driver.Driver) (string, error) {
+	if sqlDriverMap == nil {
+		sqlDriverMap = map[reflect.Type]string{}
+		for _, driverName := range sql.Drivers() {
+			db, _ := sql.Open(driverName, "")
+			if db != nil {
+				driverType := reflect.TypeOf(db.Driver())
+				sqlDriverMap[driverType] = driverName
+			}
+		}
+	}
+	driverType := reflect.TypeOf(driver)
+	driverName, found := sqlDriverMap[driverType]
+	if found {
+		return driverName, nil
+	}
+	return "", fmt.Errorf("Could not find driver type and name")
 }

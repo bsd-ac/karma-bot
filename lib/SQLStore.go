@@ -23,7 +23,7 @@ import (
 	"go.uber.org/zap"
 
 	_ "github.com/go-sql-driver/mysql"
-	_ "github.com/jackc/pgx/v4"
+	_ "github.com/jackc/pgx/v4/stdlib"
 	_ "github.com/mattn/go-sqlite3"
 
 	sqlp "bsd.ac/karma-bot/lib/sqlp"
@@ -83,12 +83,19 @@ func (s *SQLStore) UpdateDB(dbPatches BotVersionArr) error {
 	zap.S().Infof("Current database version is %v.%v.%v", cver.Major, cver.Minor, cver.Patch)
 	zap.S().Infof("Upgrading database to latest version...")
 	sort.Sort(dbPatches)
+	driverType := s.DB.Driver()
+	driverName, err := SQLDriverName(driverType)
+	if err != nil {
+		zap.S().Errorf("Failed to find database driver name: %v", err)
+		return err
+	}
+	zap.S().Infof("Current database driver in use: %s", driverName)
 	for _, kver := range dbPatches {
 		if !BVLess(cver, kver) {
 			continue
 		}
 		zap.S().Infof("Applying patch version %v.%v.%v", kver.Major, kver.Minor, kver.Patch)
-		err := kver.SQLPatch(s.DB)
+		err := kver.SQLPatch(s.DB, driverName)
 		if err != nil {
 			zap.S().Errorf("Failed to patch: %v", err)
 			zap.S().Errorf("Aborting update of the database")

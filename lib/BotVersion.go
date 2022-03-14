@@ -24,7 +24,7 @@ type BotVersion struct {
 	Major    int
 	Minor    int
 	Patch    int
-	SQLPatch func(db *sql.DB) error
+	SQLPatch func(db *sql.DB, driverName string) error
 }
 
 // strict inequality checker: v1 < v2

@@ -82,7 +82,7 @@ func main() {
 	sqlStore, err := lib.NewSQLStore(cfg.DBtype, cfg.DBdsn)
 	if err != nil {
 		bdbStore.BDB.Close()
-		klog.Fatalf("Could not open the SQLStore: %v", err)
+		klog.Fatalf("Could not create the SQLStore: %v", err)
 	}
 	defer sqlStore.DB.Close()
 
