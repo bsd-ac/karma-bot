@@ -2,6 +2,7 @@
 name: modtidy
 
 on:
+  workflow_dispatch:
   schedule:
     - cron: '0 */6 * * *'
 
@@ -15,7 +16,7 @@ jobs:
       - name: Update dependencies
         run: |
           go get -u ./...
-          go mod tidy ./...
+          go mod tidy
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v3
