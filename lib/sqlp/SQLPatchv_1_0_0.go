@@ -18,37 +18,20 @@ package lib
 
 import (
 	"database/sql"
+
+	"go.uber.org/zap"
 )
 
-type KarmaVersion struct {
-	Major    int
-	Minor    int
-	Patch    int
-	SQLPatch func(db *sql.DB) bool
-}
-
-// strict inequality checker
-func KVLess(v1, v2 KarmaVersion) bool {
-	if v1.Major != v2.Major {
-		return v1.Major < v2.Major
-	} else if v1.Minor != v2.Minor {
-		return v1.Minor < v2.Minor
-	} else if v1.Patch != v2.Patch {
-		return v1.Patch < v2.Patch
+func SQLpatchv_1_0_0(db *sql.DB) error {
+	sqlquery := `CREATE TABLE IF NOT EXISTS version (present BOOL PRIMARY KEY DEFAULT TRUE, major INTEGER NOT NULL, minor INTEGER NOT NULL, patch INTEGER NOT NULL, CONSTRAINT present_uniq CHECK (present));
+CREATE TABLE IF NOT EXISTS stateStore (key STRING PRIMARY KEY, val BLOB);
+CREATE TABLE IF NOT EXISTS votes (senderID STRING NOT NULL, targetID STRING NOT NULL, eventID STRING, roomID STRING, vote INTEGER NOT NULL, PRIMARY KEY(senderID, targetID, eventID, roomID));
+INSERT INTO version(present, major, minor, patch) values(1, 1, 0, 0);
+`
+	_, err := db.Exec(sqlquery)
+	if err != nil {
+		zap.S().Errorf("Error while applying patch 1.0.0: %v", err)
+		return err
 	}
-	return false
+	return nil
 }
-
-type KarmaVersionArr []KarmaVersion
-
-func (karr KarmaVersionArr) Len() int {
-	return len(karr)
-}
-func (karr KarmaVersionArr) Swap(i, j int) {
-	karr[i], karr[j] = karr[j], karr[i]
-}
-func (karr KarmaVersionArr) Less(i, j int) bool {
-	return KVLess(karr[i], karr[j])
-}
-
-var KVPatches = KarmaVersionArr{SQLPatchv_1_0_0}

@@ -17,7 +17,6 @@
 package lib
 
 import (
-	"database/sql"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -35,9 +34,11 @@ type ConfigData struct {
 	DebugLevel  int    `ini:"DebugLevel"`
 	Autojoin    bool   `ini:"Autojoin"`
 	DBDirectory string `ini:"DBDirectory"`
+	DBtype      string `ini:"DBtype"`
+	DBdsn       string `ini:"DBdsn"`
 }
 
-func ReadConfig(ConfigFile string) (*ConfigData, *sql.DB, *BDBStore) {
+func ReadConfig(ConfigFile string) (*ConfigData, error) {
 	cfg := new(ConfigData)
 	cfg.Username = ""
 	cfg.AccessToken = ""
@@ -46,46 +47,52 @@ func ReadConfig(ConfigFile string) (*ConfigData, *sql.DB, *BDBStore) {
 	cfg.Autojoin = false
 	cfg.DBDirectory = "/var/db/karma-bot"
 
+	// valid SQL driver name: sqlite3, mysql, postgresql
+	cfg.DBtype = "sqlite3"
+	// Data Source Name (DSN) examples:
+	// sqlite   - file:/var/db/karm-bot/sqlite3/data.sqlite3
+	// postgres -
+	//            postgres://username:password@localhost:5432/dbName
+	//            postgres://username:password@%2Fvar%2Frun%2Fpostgresql/dbName
+	//
+	// mysql    -
+	//            username:password@tcp(localhost:3306)/dbName
+	//            username:password@unix(/tmp/mysql.sock)/dbName
+	//
+	cfg.DBdsn = "file:/var/db/karma-bot/sqlite3/data.sqlite3"
+
 	err := ini.MapTo(cfg, ConfigFile)
 	if err != nil {
-		fmt.Printf("Failed to read config file '%v': %v\n", ConfigFile, err)
-		os.Exit(1)
+		return nil, fmt.Errorf("Failed to read config file '%s': %v", ConfigFile, err)
 	}
 	if cfg.Username == "" {
-		fmt.Printf("Config file does not have 'Homeserver'\n")
-		os.Exit(1)
+		return nil, fmt.Errorf("Config file does not have 'Homeserver'")
 	}
 	if cfg.AccessToken == "" {
-		fmt.Printf("Config file does not have 'Username'\n")
-		os.Exit(1)
+		return nil, fmt.Errorf("Config file does not have 'Username'")
 	}
 	if cfg.Homeserver == "" {
-		fmt.Printf("Config file does not have 'AccessToken'\n")
-		os.Exit(1)
+		return nil, fmt.Errorf("Config file does not have 'AccessToken'")
 	}
+
 	dbDirStat, err := os.Stat(cfg.DBDirectory)
 	if os.IsNotExist(err) {
-		fmt.Printf("Database directory '%v' does not exist\n", cfg.DBDirectory)
-		os.Exit(1)
+		return nil, fmt.Errorf("Database directory '%v' does not exist", cfg.DBDirectory)
 	}
 	if !dbDirStat.IsDir() {
-		fmt.Printf("Database directory '%v' exists but is not a directory\n", cfg.DBDirectory)
-		os.Exit(1)
+		return nil, fmt.Errorf("Database directory '%v' exists but is not a directory", cfg.DBDirectory)
 	}
-	voteDir := filepath.Join(cfg.DBDirectory, "votes")
+
+	voteDir := filepath.Join(cfg.DBDirectory, "sqlite3")
 	err = os.MkdirAll(voteDir, os.ModePerm)
 	if err != nil {
-		fmt.Printf("Could not create votes database directory '%s': %v", voteDir, err)
-		os.Exit(1)
+		return nil, fmt.Errorf("Could not create sqlite3 database directory '%s': %v", voteDir, err)
 	}
 	bdbDir := filepath.Join(cfg.DBDirectory, "badger")
 	err = os.MkdirAll(bdbDir, os.ModePerm)
 	if err != nil {
-		fmt.Printf("Could not create badger database directory '%s': %v", bdbDir, err)
-		os.Exit(1)
+		return nil, fmt.Errorf("Could not create badger database directory '%s': %v", bdbDir, err)
 	}
 
-	votesDB := InitDB(filepath.Join(voteDir, "votes.db"))
-	bdbStore := NewBDBStore(bdbDir)
-	return cfg, votesDB, bdbStore
+	return cfg, nil
 }

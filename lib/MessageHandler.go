@@ -34,16 +34,16 @@ func MessageHandler(cli *mautrix.Client, source mautrix.EventSource, evt *event.
 		re := regexp.MustCompile(pat)
 		if re.MatchString(body) {
 			person := re.ReplaceAllString(body, "$1")
-			fmt.Printf("person = %v\n", person)
+			cli.Logger.Debugfln("person = %v\n", person)
 		} else {
-			fmt.Printf("no person found\n")
+			cli.Logger.Debugfln("no person found\n")
 		}
 	}
 	rex := regexp.MustCompile(`(?i)^\!uptime`)
 	if rex.MatchString(body) {
 		tnow := time.Now()
 		tdiff := tnow.Sub(KarmaStartTime)
-		fmt.Printf("Requested uptime - %v\n", tdiff)
+		cli.Logger.Debugfln("Requested uptime - %v\n", tdiff)
 		cli.SendText(evt.RoomID, fmt.Sprintf("I have been up for %v\n", tdiff.String()))
 	}
 }

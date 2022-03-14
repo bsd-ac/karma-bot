@@ -14,26 +14,20 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
+
 package lib
 
 import (
-	"database/sql"
-	"fmt"
-
-	_ "github.com/mattn/go-sqlite3"
+	"go.uber.org/zap"
 )
 
-func sqlpatch(db *sql.DB) bool {
-	sqlquery := `CREATE TABLE IF NOT EXISTS version (present BOOL PRIMARY KEY DEFAULT TRUE, major INTEGER NOT NULL, minor INTEGER NOT NULL, patch INTEGER NOT NULL, CONSTRAINT present_uniq CHECK (present));
-CREATE TABLE IF NOT EXISTS votes (senderID STRING NOT NULL, targetID STRING NOT NULL, eventID STRING, roomID STRING, vote INTEGER NOT NULL, PRIMARY KEY(senderID, targetID, eventID, roomID));
-INSERT INTO version(present, major, minor, patch) values(1, 1, 0, 0);
-`
-	_, err := db.Exec(sqlquery)
-	if err != nil {
-		fmt.Printf("Error while applying patch 1.0.0: %v\n", err)
-		return false
-	}
-	return true
+type MautrixLogger struct {
+	Logger *zap.SugaredLogger
 }
 
-var SQLPatchv_1_0_0 = KarmaVersion{1, 0, 0, sqlpatch}
+func (m *MautrixLogger) Debugfln(f string, v ...interface{}) {
+	m.Logger.Debugf(f, v...)
+}
+func (m *MautrixLogger) Warnfln(f string, v ...interface{}) {
+	m.Logger.Warnf(f, v...)
+}

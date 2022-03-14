@@ -15,3 +15,38 @@
  *
  */
 package lib
+
+import (
+	"database/sql"
+)
+
+type BotVersion struct {
+	Major    int
+	Minor    int
+	Patch    int
+	SQLPatch func(db *sql.DB) error
+}
+
+// strict inequality checker: v1 < v2
+func BVLess(v1, v2 BotVersion) bool {
+	if v1.Major != v2.Major {
+		return v1.Major < v2.Major
+	} else if v1.Minor != v2.Minor {
+		return v1.Minor < v2.Minor
+	} else if v1.Patch != v2.Patch {
+		return v1.Patch < v2.Patch
+	}
+	return false
+}
+
+type BotVersionArr []BotVersion
+
+func (barr BotVersionArr) Len() int {
+	return len(barr)
+}
+func (barr BotVersionArr) Swap(i, j int) {
+	barr[i], barr[j] = barr[j], barr[i]
+}
+func (barr BotVersionArr) Less(i, j int) bool {
+	return BVLess(barr[i], barr[j])
+}
