@@ -21,24 +21,54 @@ import (
 	"bytes"
 	"encoding/gob"
 
+	"go.uber.org/zap"
 	"maunium.net/go/mautrix"
 	"maunium.net/go/mautrix/id"
 
 	badger "github.com/dgraph-io/badger/v3"
 )
 
+type zapLogger struct {
+	L *zap.SugaredLogger
+}
+
+func (z *zapLogger) Errorf(f string, v ...interface{}) {
+	z.L.Errorf(f, v...)
+}
+func (z *zapLogger) Warningf(f string, v ...interface{}) {
+	z.L.Warnf(f, v...)
+}
+func (z *zapLogger) Infof(f string, v ...interface{}) {
+	z.L.Infof(f, v...)
+}
+func (z *zapLogger) Debugf(f string, v ...interface{}) {
+	z.L.Debugf(f, v...)
+}
+
+/*
+   Main functions for usage
+
+   Set(key, val []byte) error       - set value of 'key' to 'val' (as []byte)
+   Get(key []byte) ([]byte, error)  - get value of 'key'          (as []byte)
+   SSet(key, val string) error      - set value of 'key' to 'val' (as string)
+   SGet(key string) ([]byte, error) - get value of 'key'          (as string)
+*/
 type BDBStore struct {
 	BDB *badger.DB
 }
 
-func NewBDBStore(dbPath string) *BDBStore {
-	bdb, err := badger.Open(badger.DefaultOptions(dbPath))
+func NewBDBStore(dbPath string) (*BDBStore, error) {
+	opts := badger.DefaultOptions(dbPath)
+	zlog := new(zapLogger)
+	zlog.L = zap.S()
+	opts.Logger = zlog
+	bdb, err := badger.Open(opts)
 	if err != nil {
-		return nil
+		return nil, err
 	}
 	bdbStore := new(BDBStore)
 	bdbStore.BDB = bdb
-	return bdbStore
+	return bdbStore, nil
 }
 
 func (s *BDBStore) encodeRoom(room *mautrix.Room) ([]byte, error) {
@@ -64,27 +94,53 @@ func (s *BDBStore) decodeRoom(room []byte) (*mautrix.Room, error) {
 
 func (s *BDBStore) Get(key []byte) ([]byte, error) {
 	var val []byte
-	txn := s.BDB.NewTransaction(false)
-	item, err := txn.Get(key)
-	if err != nil {
-		return nil, err
-	}
-	err = item.Value(func(iVal []byte) error {
-		val = append([]byte{}, iVal...)
+	err := s.BDB.View(func(txn *badger.Txn) error {
+		item, err := txn.Get(key)
+		if err != nil {
+			val = nil
+			return err
+		}
+		item.Value(func(iVal []byte) error {
+			val = append([]byte{}, iVal...)
+			return nil
+		})
 		return nil
 	})
-	txn.Discard()
 	return val, err
 }
 
-func (s *BDBStore) Set(key []byte, val []byte) error {
-	txn := s.BDB.NewTransaction(true)
-	err := txn.Set(key, val)
-	if err != nil {
-		return err
+func (s *BDBStore) SGet(key string) (string, error) {
+	byt, err := s.Get([]byte(key))
+	return string(byt), err
+}
+
+func (s *BDBStore) Set(key, val []byte) error {
+	var err error
+	for i := 0; i < 3; i++ {
+		err = s.BDB.Update(func(txn *badger.Txn) error {
+			var err error
+			err = txn.Set(key, val)
+			if err != nil {
+				if err == badger.ErrTxnTooBig {
+					txn.Commit()
+				}
+				return err
+			} else {
+				return nil
+			}
+		})
+		if err == nil {
+			return nil
+		}
+		if err != badger.ErrTxnTooBig && err != badger.ErrConflict {
+			return err
+		}
 	}
-	err = txn.Commit()
 	return err
+}
+
+func (s *BDBStore) SSet(key, val string) error {
+	return s.Set([]byte(key), []byte(val))
 }
 
 func (s *BDBStore) SaveFilterID(userID id.UserID, filterID string) {
