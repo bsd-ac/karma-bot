@@ -33,41 +33,6 @@ type SQLStore struct {
 	DB *sql.DB
 }
 
-func (s *SQLStore) Get(key []byte) ([]byte, error) {
-	var val []byte
-	err := s.DB.QueryRow(`SELECT val FROM stateStore WHERE key = ?;`, key).Scan(&val)
-	if err != nil {
-		zap.S().Errorf("Failed to get values for '%v': %v", key, err)
-		return nil, err
-	}
-	return val, err
-}
-
-func (s *SQLStore) Set(key, val []byte) error {
-	res, err := s.DB.Exec(`UPDATE stateStore SET val = ? WHERE key = ?;`, val, key)
-	nRows, _ := res.RowsAffected()
-	if err != nil || nRows == 0 {
-		zap.S().Debugf("Failed to update value for '%v', trying to insert", key)
-		res, err = s.DB.Exec(`INSERT INTO stateStore(key, val) values(?, ?);`, key, val)
-		if err != nil {
-			zap.S().Errorf("Failed to insert value for '%v': %v", key, err)
-		}
-	}
-	return err
-}
-
-func (s *SQLStore) SGet(key string) (string, error) {
-	str := []byte(key)
-	val, err := s.Get(str)
-	return string(val), err
-}
-
-func (s *SQLStore) SSet(key, val string) error {
-	bkey := []byte(key)
-	bval := []byte(val)
-	return s.Set(bkey, bval)
-}
-
 func (s *SQLStore) GetVersion() (BotVersion, error) {
 	var cver BotVersion
 	err := s.DB.QueryRow(`SELECT major,minor,patch FROM version;`).Scan(&cver.Major, &cver.Minor, &cver.Patch)

@@ -23,7 +23,7 @@ import (
 )
 
 func SQLpatchv_1_0_0(db *sql.DB, driverName string) error {
-	sqlquery := "CREATE TABLE IF NOT EXISTS version (present BOOL PRIMARY KEY DEFAULT TRUE, major INTEGER NOT NULL, minor INTEGER NOT NULL, patch INTEGER NOT NULL, CONSTRAINT present_uniq CHECK (present)); CREATE TABLE IF NOT EXISTS stateStore (key BYTEA PRIMARY KEY, val BYTEA); CREATE TABLE IF NOT EXISTS votes (senderID VARCHAR NOT NULL, targetID VARCHAR NOT NULL, eventID VARCHAR, roomID VARCHAR, vote INTEGER NOT NULL, PRIMARY KEY(senderID, targetID, eventID, roomID)); INSERT INTO version(present, major, minor, patch) values(TRUE, 1, 0, 0);"
+	sqlquery := "CREATE TABLE IF NOT EXISTS version (present BOOL PRIMARY KEY DEFAULT TRUE, major INTEGER NOT NULL, minor INTEGER NOT NULL, patch INTEGER NOT NULL, CONSTRAINT present_uniq CHECK (present)); CREATE TABLE IF NOT EXISTS votes (senderID VARCHAR NOT NULL, targetID VARCHAR NOT NULL, eventID VARCHAR, roomID VARCHAR, vote INTEGER NOT NULL, PRIMARY KEY(senderID, targetID, eventID, roomID)); INSERT INTO version(present, major, minor, patch) values(TRUE, 1, 0, 0);"
 	_, err := db.Exec(sqlquery)
 	if err != nil {
 		zap.S().Errorf("Error while applying patch 1.0.0: %v", err)
