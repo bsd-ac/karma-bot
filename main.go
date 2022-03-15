@@ -99,9 +99,17 @@ func main() {
 	klog.Debugf("Creating bot client")
 	syncer := client.Syncer.(*mautrix.DefaultSyncer)
 	klog.Debugf("Adding event handlers")
-	syncer.OnEventType(event.EventMessage, func(source mautrix.EventSource, evt *event.Event) { lib.MessageHandler(client, source, evt) })
-	syncer.OnEventType(event.EventReaction, func(source mautrix.EventSource, evt *event.Event) { lib.ReactionHandler(client, source, evt) })
-	syncer.OnEventType(event.EventRedaction, func(source mautrix.EventSource, evt *event.Event) { lib.RedactionHandler(client, source, evt) })
+	syncer.OnEventType(event.EventMessage, func(source mautrix.EventSource, evt *event.Event) {
+		lib.MessageHandler(client, source, evt, bdbStore, sqlStore)
+	})
+	/*
+		syncer.OnEventType(event.EventReaction, func(source mautrix.EventSource, evt *event.Event) {
+			lib.ReactionHandler(client, source, evt, bdbStore, sqlStore)
+		})
+		syncer.OnEventType(event.EventRedaction, func(source mautrix.EventSource, evt *event.Event) {
+			lib.RedactionHandler(client, source, evt, bdbStore, sqlStore)
+		})
+	*/
 
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)

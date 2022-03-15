@@ -21,24 +21,11 @@ import (
 	"maunium.net/go/mautrix/event"
 )
 
-func MessageHandler(cli *mautrix.Client, source mautrix.EventSource, evt *event.Event, bdb *BDBStore, sqlDB *SQLStore) {
-
-	body := evt.Content.AsMessage().Body
-	for _, plugin := range Plugins {
-		if plugin.MatchMessage(body) {
-			plugin.ProcessMessage(body, cli, source, evt, bdb, sqlDB)
-		}
-	}
-
-	/*
-		for _, pat := range regex_arr {
-			re := regexp.MustCompile(pat)
-			if re.MatchString(body) {
-				person := re.ReplaceAllString(body, "$1")
-				cli.Logger.Debugfln("person = %v\n", person)
-			} else {
-				cli.Logger.Debugfln("no person found\n")
-			}
-		}
-	*/
+type BotPlugin interface {
+	MatchMessage(body string) bool
+	ProcessMessage(body string, cli *mautrix.Client, source mautrix.EventSource, evt *event.Event, bdb *BDBStore, sqlDB *SQLStore) error
 }
+
+type BotPlugins []BotPlugin
+
+var Plugins = BotPlugins{&UptimeBot{}, &GetKarmaBot{}}

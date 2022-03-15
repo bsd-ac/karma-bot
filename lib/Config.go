@@ -20,12 +20,9 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"time"
 
 	"gopkg.in/ini.v1"
 )
-
-var KarmaStartTime = time.Now()
 
 type ConfigData struct {
 	Username    string `ini:"Username"`

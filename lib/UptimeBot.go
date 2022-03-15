@@ -17,28 +17,24 @@
 package lib
 
 import (
+	"fmt"
+	"time"
+
 	"maunium.net/go/mautrix"
 	"maunium.net/go/mautrix/event"
 )
 
-func MessageHandler(cli *mautrix.Client, source mautrix.EventSource, evt *event.Event, bdb *BDBStore, sqlDB *SQLStore) {
+type UptimeBot struct {
+}
 
-	body := evt.Content.AsMessage().Body
-	for _, plugin := range Plugins {
-		if plugin.MatchMessage(body) {
-			plugin.ProcessMessage(body, cli, source, evt, bdb, sqlDB)
-		}
-	}
+func (u *UptimeBot) MatchMessage(body string) bool {
+	return body == "!uptime"
+}
 
-	/*
-		for _, pat := range regex_arr {
-			re := regexp.MustCompile(pat)
-			if re.MatchString(body) {
-				person := re.ReplaceAllString(body, "$1")
-				cli.Logger.Debugfln("person = %v\n", person)
-			} else {
-				cli.Logger.Debugfln("no person found\n")
-			}
-		}
-	*/
+func (u *UptimeBot) ProcessMessage(body string, cli *mautrix.Client, source mautrix.EventSource, evt *event.Event, bdb *BDBStore, sqlDB *SQLStore) error {
+	tnow := time.Now()
+	tdiff := tnow.Sub(BotStartTime)
+	cli.Logger.Debugfln("Requested uptime - %v\n", tdiff)
+	cli.SendText(evt.RoomID, fmt.Sprintf("I have been up for %v\n", tdiff.String()))
+	return nil
 }

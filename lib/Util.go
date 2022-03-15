@@ -24,10 +24,14 @@ import (
 	"fmt"
 	"math/rand"
 	"reflect"
+	"regexp"
+	"strings"
 	"time"
 
 	"maunium.net/go/mautrix"
 )
+
+var BotStartTime = time.Now()
 
 var RNG = rand.New(rand.NewSource(time.Now().UnixNano()))
 
@@ -84,4 +88,16 @@ func DecodeRoom(room []byte) (*mautrix.Room, error) {
 		return nil, err
 	}
 	return r, nil
+}
+
+var userRegexString = `\<a\s+href=".+/(.+)">.+</a>`
+var urxp = regexp.MustCompile(userRegexString)
+
+func HTMLToUserID(href string) string {
+	thref := strings.TrimSpace(href)
+	if urxp.MatchString(thref) {
+		userID := urxp.ReplaceAllString(thref, "$1")
+		return userID
+	}
+	return ""
 }
