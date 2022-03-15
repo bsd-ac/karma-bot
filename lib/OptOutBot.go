@@ -17,15 +17,29 @@
 package lib
 
 import (
+	"regexp"
+
+	"go.uber.org/zap"
 	"maunium.net/go/mautrix"
 	"maunium.net/go/mautrix/event"
 )
 
-type BotPlugin interface {
-	MatchMessage(body string) bool
-	ProcessMessage(body string, cli *mautrix.Client, source mautrix.EventSource, evt *event.Event, bdb *BDBStore, sqlDB *SQLStore) error
+type OptOutBot struct {
 }
 
-type BotPlugins []BotPlugin
+const oout_rstr = `(?i)^\!optout\s*$`
 
-var Plugins = BotPlugins{&UptimeBot{}, &GetKarmaBot{}, &OptInBot{}, &OptOutBot{}}
+var oout_rexp = regexp.MustCompile(oout_rstr)
+
+func (u *OptOutBot) MatchMessage(body string) bool {
+	return oout_rexp.MatchString(body)
+}
+
+func (u *OptOutBot) ProcessMessage(body string, cli *mautrix.Client, source mautrix.EventSource, evt *event.Event, bdb *BDBStore, sqlDB *SQLStore) error {
+	senderID := evt.Sender.String()
+	err := KarmaOptOut(senderID, bdb)
+	if err != nil {
+		zap.S().Warnf("Could not opt out for '%s': %v", senderID, err)
+	}
+	return err
+}

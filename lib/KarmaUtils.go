@@ -20,6 +20,7 @@ package lib
 import (
 	"encoding/binary"
 
+	"go.uber.org/zap"
 	"golang.org/x/crypto/blake2b"
 )
 
@@ -43,6 +44,7 @@ func uid2KarmaKey(userID string) []byte {
 
 func KarmaIsOptOut(userID string, s *BDBStore) (bool, error) {
 	uid_key := uid2OptOutKey(userID)
+	zap.S().Debugf("opt key for '%s': %v", userID, uid_key)
 	_, err := s.Get(uid_key)
 	if err != nil {
 		return false, err
@@ -52,12 +54,14 @@ func KarmaIsOptOut(userID string, s *BDBStore) (bool, error) {
 
 func KarmaOptOut(userID string, s *BDBStore) error {
 	uid_key := uid2OptOutKey(userID)
+	zap.S().Debugf("opt key for '%s': %v", userID, uid_key)
 	val := []byte{0}
 	return s.Set(uid_key, val)
 }
 
 func KarmaOptIn(userID string, s *BDBStore) error {
 	uid_key := uid2OptOutKey(userID)
+	zap.S().Debugf("opt key for '%s': %v", userID, uid_key)
 	return s.Delete(uid_key)
 }
 

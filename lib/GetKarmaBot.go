@@ -30,19 +30,18 @@ import (
 type GetKarmaBot struct {
 }
 
-const rstr = `(?i)\!karma (.*)`
+const gk_rstr = `(?i)\!karma(.*)$`
 
-var rexp = regexp.MustCompile(rstr)
+var gk_rexp = regexp.MustCompile(gk_rstr)
 
 func (u *GetKarmaBot) MatchMessage(body string) bool {
-	zap.S().Warnf("got string %s", body)
-	return rexp.MatchString(body)
+	return gk_rexp.MatchString(body)
 }
 
 func (u *GetKarmaBot) ProcessMessage(body string, cli *mautrix.Client, source mautrix.EventSource, evt *event.Event, bdb *BDBStore, sqlDB *SQLStore) error {
 	htmlBody := strings.TrimSpace(evt.Content.AsMessage().FormattedBody)
 	zap.S().Debugf("Processing html '%s'", htmlBody)
-	href := rexp.ReplaceAllString(htmlBody, "$1")
+	href := gk_rexp.ReplaceAllString(htmlBody, "$1")
 	zap.S().Debugf("Processing href '%s'", href)
 	targetID := HTMLToUserID(href)
 	zap.S().Debugf("Got userID '%s'", targetID)
@@ -62,6 +61,7 @@ func (u *GetKarmaBot) ProcessMessage(body string, cli *mautrix.Client, source ma
 
 	msg := ""
 	optOut, _ := KarmaIsOptOut(targetID, bdb)
+	zap.S().Debugf("Current opt out status for '%s': %t", targetID, optOut)
 	if optOut {
 		msg = "Unknown user"
 	} else {
