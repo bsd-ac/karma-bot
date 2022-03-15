@@ -119,6 +119,18 @@ func (s *BDBStore) SSet(key, val string) error {
 	return s.Set([]byte(key), []byte(val))
 }
 
+func (s *BDBStore) Delete(key []byte) error {
+	err := s.DB.Update(func(txn *badger.Txn) error {
+		err := txn.Delete(key)
+		return err
+	})
+	return err
+}
+
+func (s *BDBStore) SDelete(key string) error {
+	return s.Delete([]byte(key))
+}
+
 func (s *BDBStore) SaveFilterID(userID id.UserID, filterID string) {
 	uid := "userid_filter_" + userID.String()
 	_ = s.Set([]byte(uid), []byte(filterID))
