@@ -51,7 +51,7 @@ func (z *zapLogger) Debugf(f string, v ...interface{}) {
    SGet(key string) ([]byte, error) - get value of 'key'          (as string)
 */
 type BDBStore struct {
-	BDB *badger.DB
+	DB *badger.DB
 }
 
 func NewBDBStore(dbPath string) (*BDBStore, error) {
@@ -64,13 +64,13 @@ func NewBDBStore(dbPath string) (*BDBStore, error) {
 		return nil, err
 	}
 	bdbStore := new(BDBStore)
-	bdbStore.BDB = bdb
+	bdbStore.DB = bdb
 	return bdbStore, nil
 }
 
 func (s *BDBStore) Get(key []byte) ([]byte, error) {
 	var val []byte
-	err := s.BDB.View(func(txn *badger.Txn) error {
+	err := s.DB.View(func(txn *badger.Txn) error {
 		item, err := txn.Get(key)
 		if err != nil {
 			val = nil
@@ -93,7 +93,7 @@ func (s *BDBStore) SGet(key string) (string, error) {
 func (s *BDBStore) Set(key, val []byte) error {
 	var err error
 	for i := 0; i < 3; i++ {
-		err = s.BDB.Update(func(txn *badger.Txn) error {
+		err = s.DB.Update(func(txn *badger.Txn) error {
 			var err error
 			err = txn.Set(key, val)
 			if err != nil {

@@ -77,11 +77,11 @@ func main() {
 	if err != nil {
 		klog.Fatalf("Could not open the BDBStore: %v", err)
 	}
-	defer bdbStore.BDB.Close()
+	defer bdbStore.DB.Close()
 
 	sqlStore, err := lib.NewSQLStore(cfg.DBtype, cfg.DBdsn)
 	if err != nil {
-		bdbStore.BDB.Close()
+		bdbStore.DB.Close()
 		klog.Fatalf("Could not create the SQLStore: %v", err)
 	}
 	defer sqlStore.DB.Close()
@@ -109,6 +109,8 @@ func main() {
 	go func() {
 		err := client.Sync()
 		if err != nil {
+			bdbStore.DB.Close()
+			sqlStore.DB.Close()
 			panic(err)
 		}
 	}()
