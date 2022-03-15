@@ -33,38 +33,39 @@ type SQLStore struct {
 	DB *sql.DB
 }
 
-func (s *SQLStore) SGet(key string) (string, error) {
-	var val string
-	err := s.DB.QueryRow(`SELECT data FROM stateStore WHERE key = '$1';`, key).Scan(&val)
+func (s *SQLStore) Get(key []byte) ([]byte, error) {
+	var val []byte
+	err := s.DB.QueryRow(`SELECT val FROM stateStore WHERE key = ?;`, key).Scan(&val)
 	if err != nil {
-		zap.S().Errorf("SGet failed to fetch values for '%s': %v", key, err)
-		return "", err
+		zap.S().Errorf("Failed to get values for '%v': %v", key, err)
+		return nil, err
 	}
 	return val, err
 }
 
-func (s *SQLStore) SSet(key, val string) error {
-	res, err := s.DB.Exec(`UPDATE dataStore SET val = '$2' WHERE key = '$1';`, key, val)
+func (s *SQLStore) Set(key, val []byte) error {
+	res, err := s.DB.Exec(`UPDATE stateStore SET val = ? WHERE key = ?;`, val, key)
 	nRows, _ := res.RowsAffected()
-	if err != nil && nRows == 0 {
-		res, err = s.DB.Exec(`INSERT INTO dataStore(key, val) values('$1', '$2');`, key, val)
+	if err != nil || nRows == 0 {
+		zap.S().Debugf("Failed to update value for '%v', trying to insert", key)
+		res, err = s.DB.Exec(`INSERT INTO stateStore(key, val) values(?, ?);`, key, val)
 		if err != nil {
-			zap.S().Errorf("SSet could not update or insert: %v", err)
+			zap.S().Errorf("Failed to insert value for '%v': %v", key, err)
 		}
 	}
 	return err
 }
 
-func (s *SQLStore) Get(key []byte) ([]byte, error) {
-	str := string(key)
-	val, err := s.SGet(str)
-	return []byte(val), err
+func (s *SQLStore) SGet(key string) (string, error) {
+	str := []byte(key)
+	val, err := s.Get(str)
+	return string(val), err
 }
 
-func (s *SQLStore) Set(key, val []byte) error {
-	skey := string(key)
-	sval := string(val)
-	return s.SSet(skey, sval)
+func (s *SQLStore) SSet(key, val string) error {
+	bkey := []byte(key)
+	bval := []byte(val)
+	return s.Set(bkey, bval)
 }
 
 func (s *SQLStore) GetVersion() (BotVersion, error) {
