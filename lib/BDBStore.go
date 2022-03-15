@@ -18,9 +18,6 @@
 package lib
 
 import (
-	"bytes"
-	"encoding/gob"
-
 	"go.uber.org/zap"
 	"maunium.net/go/mautrix"
 	"maunium.net/go/mautrix/id"
@@ -69,27 +66,6 @@ func NewBDBStore(dbPath string) (*BDBStore, error) {
 	bdbStore := new(BDBStore)
 	bdbStore.BDB = bdb
 	return bdbStore, nil
-}
-
-func (s *BDBStore) encodeRoom(room *mautrix.Room) ([]byte, error) {
-	buf := new(bytes.Buffer)
-	enc := gob.NewEncoder(buf)
-	err := enc.Encode(room)
-	if err != nil {
-		return nil, err
-	}
-	return buf.Bytes(), nil
-}
-
-func (s *BDBStore) decodeRoom(room []byte) (*mautrix.Room, error) {
-	var r *mautrix.Room
-	buf := bytes.NewBuffer(room)
-	dec := gob.NewDecoder(buf)
-	err := dec.Decode(&r)
-	if err != nil {
-		return nil, err
-	}
-	return r, nil
 }
 
 func (s *BDBStore) Get(key []byte) ([]byte, error) {
@@ -166,7 +142,7 @@ func (s *BDBStore) LoadNextBatch(userID id.UserID) string {
 }
 
 func (s *BDBStore) SaveRoom(room *mautrix.Room) {
-	rdata, _ := s.encodeRoom(room)
+	rdata, _ := EncodeRoom(room)
 	rid := "roomid_" + room.ID.String()
 	s.Set([]byte(rid), rdata)
 }
@@ -174,6 +150,6 @@ func (s *BDBStore) SaveRoom(room *mautrix.Room) {
 func (s *BDBStore) LoadRoom(roomID id.RoomID) *mautrix.Room {
 	rid := "roomid_" + roomID.String()
 	rdata, _ := s.Get([]byte(rid))
-	room, _ := s.decodeRoom([]byte(rdata))
+	room, _ := DecodeRoom([]byte(rdata))
 	return room
 }

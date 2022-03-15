@@ -17,12 +17,16 @@
 package lib
 
 import (
+	"bytes"
 	"database/sql"
 	"database/sql/driver"
+	"encoding/gob"
 	"fmt"
 	"math/rand"
 	"reflect"
 	"time"
+
+	"maunium.net/go/mautrix"
 )
 
 var RNG = rand.New(rand.NewSource(time.Now().UnixNano()))
@@ -40,7 +44,8 @@ func RandomString(length int) string {
 	return RandomStringFromChars(length, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
 }
 
-var sqlDriverMap map[reflect.Type] string
+var sqlDriverMap map[reflect.Type]string
+
 func SQLDriverName(driver driver.Driver) (string, error) {
 	if sqlDriverMap == nil {
 		sqlDriverMap = map[reflect.Type]string{}
@@ -58,4 +63,25 @@ func SQLDriverName(driver driver.Driver) (string, error) {
 		return driverName, nil
 	}
 	return "", fmt.Errorf("Could not find driver type and name")
+}
+
+func EncodeRoom(room *mautrix.Room) ([]byte, error) {
+	buf := new(bytes.Buffer)
+	enc := gob.NewEncoder(buf)
+	err := enc.Encode(room)
+	if err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
+}
+
+func DecodeRoom(room []byte) (*mautrix.Room, error) {
+	var r *mautrix.Room
+	buf := bytes.NewBuffer(room)
+	dec := gob.NewDecoder(buf)
+	err := dec.Decode(&r)
+	if err != nil {
+		return nil, err
+	}
+	return r, nil
 }
