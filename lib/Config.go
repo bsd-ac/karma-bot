@@ -47,7 +47,7 @@ func ReadConfig(ConfigFile string) (*ConfigData, error) {
 	// valid SQL driver name: sqlite3, mysql, postgresql
 	cfg.DBtype = "sqlite3"
 	// Data Source Name (DSN) examples:
-	// sqlite   - file:/var/db/karm-bot/sqlite3/data.sqlite3
+	// sqlite   - file:/var/db/karma-bot/sqlite3/data.sqlite3
 	// postgres -
 	//            postgres://username:password@localhost:5432/dbName
 	//            postgres://username:password@%2Fvar%2Frun%2Fpostgresql/dbName
@@ -56,7 +56,7 @@ func ReadConfig(ConfigFile string) (*ConfigData, error) {
 	//            username:password@tcp(localhost:3306)/dbName
 	//            username:password@unix(/tmp/mysql.sock)/dbName
 	//
-	cfg.DBdsn = "file:/var/db/karma-bot/sqlite3/data.sqlite3"
+	cfg.DBdsn = ""
 
 	err := ini.MapTo(cfg, ConfigFile)
 	if err != nil {
@@ -71,7 +71,6 @@ func ReadConfig(ConfigFile string) (*ConfigData, error) {
 	if cfg.Homeserver == "" {
 		return nil, fmt.Errorf("Config file does not have 'AccessToken'")
 	}
-
 	absDBDir, err := filepath.Abs(cfg.DBDirectory)
 	if err != nil {
 		return nil, fmt.Errorf("Could not get absolute path of DBDirectory (%s): %v", cfg.DBDirectory, err)
@@ -85,10 +84,15 @@ func ReadConfig(ConfigFile string) (*ConfigData, error) {
 		return nil, fmt.Errorf("Database directory '%v' exists but is not a directory", cfg.DBDirectory)
 	}
 
-	voteDir := filepath.Join(cfg.DBDirectory, "sqlite3")
-	err = os.MkdirAll(voteDir, os.ModePerm)
-	if err != nil {
-		return nil, fmt.Errorf("Could not create sqlite3 database directory '%s': %v", voteDir, err)
+	if cfg.DBtype == "sqlite3" {
+		if cfg.DBdsn == "" {
+			cfg.DBdsn = "file:" + filepath.Join(cfg.DBDirectory, "sqlite3/data.sqlite3")
+		}
+		dataDir := filepath.Join(cfg.DBDirectory, "sqlite3")
+		err = os.MkdirAll(dataDir, os.ModePerm)
+		if err != nil {
+			return nil, fmt.Errorf("Could not create sqlite3 database directory '%s': %v", dataDir, err)
+		}
 	}
 	bdbDir := filepath.Join(cfg.DBDirectory, "badger")
 	err = os.MkdirAll(bdbDir, os.ModePerm)
