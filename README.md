@@ -1,5 +1,6 @@
 [![build](https://github.com/bsd-ac/karma-bot/actions/workflows/build.yml/badge.svg)](https://github.com/bsd-ac/karma-bot/actions/workflows/build.yml)
 [![CodeQL](https://github.com/bsd-ac/karma-bot/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/bsd-ac/karma-bot/actions/workflows/codeql-analysis.yml)
+[![Maintainability](https://img.shields.io/codeclimate/maintainability/bsd-ac/karma-bot.svg)](https://codeclimate.com/github/bsd-ac/karma-bot)
 [![GitHub license](https://img.shields.io/github/license/bsd-ac/karma-bot.svg)](https://github.com/bsd-ac/karma-bot/blob/master/LICENSE)
 [![GitHub issues](https://img.shields.io/github/issues-raw/bsd-ac/karma-bot)](https://github.com/bsd-ac/karma-bot/issues)
 [![contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](https://github.com/bsd-ac/karma-bot/issues)
