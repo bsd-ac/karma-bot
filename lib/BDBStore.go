@@ -100,15 +100,10 @@ func (s *BDBStore) Set(key, val []byte) error {
 				if err == badger.ErrTxnTooBig {
 					txn.Commit()
 				}
-				return err
-			} else {
-				return nil
 			}
+			return err
 		})
-		if err == nil {
-			return nil
-		}
-		if err != badger.ErrTxnTooBig && err != badger.ErrConflict {
+		if err == nil || (err != badger.ErrTxnTooBig && err != badger.ErrConflict) {
 			return err
 		}
 	}
