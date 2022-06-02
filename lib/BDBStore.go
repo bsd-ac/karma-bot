@@ -18,29 +18,11 @@
 package lib
 
 import (
-	"go.uber.org/zap"
 	"maunium.net/go/mautrix"
 	"maunium.net/go/mautrix/id"
 
 	badger "github.com/dgraph-io/badger/v3"
 )
-
-type zapLogger struct {
-	L *zap.SugaredLogger
-}
-
-func (z *zapLogger) Errorf(f string, v ...interface{}) {
-	z.L.Errorf(f, v...)
-}
-func (z *zapLogger) Warningf(f string, v ...interface{}) {
-	z.L.Warnf(f, v...)
-}
-func (z *zapLogger) Infof(f string, v ...interface{}) {
-	z.L.Infof(f, v...)
-}
-func (z *zapLogger) Debugf(f string, v ...interface{}) {
-	z.L.Debugf(f, v...)
-}
 
 /*
    Main functions for usage
@@ -54,11 +36,9 @@ type BDBStore struct {
 	DB *badger.DB
 }
 
-func NewBDBStore(dbPath string) (*BDBStore, error) {
+func NewBDBStore(dbPath string, b *BotLogger) (*BDBStore, error) {
 	opts := badger.DefaultOptions(dbPath)
-	zlog := new(zapLogger)
-	zlog.L = zap.S()
-	opts.Logger = zlog
+	opts.Logger = b
 	bdb, err := badger.Open(opts)
 	if err != nil {
 		return nil, err
@@ -66,6 +46,10 @@ func NewBDBStore(dbPath string) (*BDBStore, error) {
 	bdbStore := new(BDBStore)
 	bdbStore.DB = bdb
 	return bdbStore, nil
+}
+
+func (s *BDBStore) Close() {
+	s.DB.Close()
 }
 
 func (s *BDBStore) Get(key []byte) ([]byte, error) {
