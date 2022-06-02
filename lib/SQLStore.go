@@ -25,12 +25,33 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/jackc/pgx/v4/stdlib"
 	_ "github.com/mattn/go-sqlite3"
-
-	sqlp "bsd.ac/karma-bot/lib/sqlp"
 )
 
 type SQLStore struct {
-	DB *sql.DB
+	DB     *sql.DB
+	DBtype string
+}
+
+func NewSQLStore(DBtype, DBdsn string) (*SQLStore, error) {
+	var err error
+	var sqlStore *SQLStore
+
+	sqlStore = new(SQLStore)
+	sqlStore.DBtype = DBtype
+	sqlDB, err := sql.Open(DBtype, DBdsn)
+	if err != nil {
+		return nil, err
+	}
+	err = sqlDB.Ping()
+	if err != nil {
+		return nil, err
+	}
+	sqlStore.DB = sqlDB
+	return sqlStore, err
+}
+
+func (s *SQLStore) Close() {
+	s.DB.Close()
 }
 
 func (s *SQLStore) GetVersion() (BotVersion, error) {
@@ -70,25 +91,4 @@ func (s *SQLStore) UpdateDB(dbPatches BotVersionArr) error {
 	}
 	zap.S().Infof("Update finished")
 	return nil
-}
-
-func NewSQLStore(DBtype, DBdsn string) (*SQLStore, error) {
-	zap.S().Debugf("Opening SQL store of type '%s' with DSN: %s", DBtype, DBdsn)
-	sqlStore := new(SQLStore)
-	sqlDB, err := sql.Open(DBtype, DBdsn)
-	if err != nil {
-		zap.S().Errorf("Could not open the database: %v", err)
-		return nil, err
-	}
-	err = sqlDB.Ping()
-	if err != nil {
-		zap.S().Errorf("Could not ping the database: %v", err)
-		return nil, err
-	}
-	sqlStore.DB = sqlDB
-	dbPatches := BotVersionArr{
-		BotVersion{1, 0, 0, sqlp.SQLpatchv_1_0_0},
-	}
-	err = sqlStore.UpdateDB(dbPatches)
-	return sqlStore, err
 }
