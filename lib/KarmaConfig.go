@@ -17,6 +17,7 @@
 package lib
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -24,7 +25,7 @@ import (
 	"gopkg.in/ini.v1"
 )
 
-type ConfigData struct {
+type KarmaConfig struct {
 	Username    string `ini:"Username"`
 	AccessToken string `ini:"AccessToken"`
 	Homeserver  string `ini:"Homeserver"`
@@ -35,8 +36,14 @@ type ConfigData struct {
 	DBdsn       string `ini:"DBdsn"`
 }
 
-func ReadConfig(ConfigFile string) (*ConfigData, error) {
-	cfg := new(ConfigData)
+func ReadConfig(ConfigFile string) (*KarmaConfig, error) {
+	var err error
+	var absDBDir string
+	var bdbDir string
+	var dataDir string
+	var dbDirStat os.FileInfo
+
+	cfg := new(KarmaConfig)
 	cfg.Username = ""
 	cfg.AccessToken = ""
 	cfg.Homeserver = ""
@@ -58,47 +65,65 @@ func ReadConfig(ConfigFile string) (*ConfigData, error) {
 	//
 	cfg.DBdsn = ""
 
-	err := ini.MapTo(cfg, ConfigFile)
+	err = ini.MapTo(cfg, ConfigFile)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to read config file '%s': %v", ConfigFile, err)
+		err = fmt.Errorf("Failed to read config file '%s': %v", ConfigFile, err)
+		goto failed
 	}
 	if cfg.Username == "" {
-		return nil, fmt.Errorf("Config file does not have 'Homeserver'")
+		err = fmt.Errorf("Config file does not have 'Homeserver'")
+		goto failed
 	}
 	if cfg.AccessToken == "" {
-		return nil, fmt.Errorf("Config file does not have 'Username'")
+		err = fmt.Errorf("Config file does not have 'Username'")
+		goto failed
 	}
 	if cfg.Homeserver == "" {
-		return nil, fmt.Errorf("Config file does not have 'AccessToken'")
+		err = fmt.Errorf("Config file does not have 'AccessToken'")
+		goto failed
 	}
-	absDBDir, err := filepath.Abs(cfg.DBDirectory)
+	absDBDir, err = filepath.Abs(cfg.DBDirectory)
 	if err != nil {
-		return nil, fmt.Errorf("Could not get absolute path of DBDirectory (%s): %v", cfg.DBDirectory, err)
+		err = fmt.Errorf("Could not get absolute path of DBDirectory (%s): %v", cfg.DBDirectory, err)
+		goto failed
 	}
 	cfg.DBDirectory = absDBDir
-	dbDirStat, err := os.Stat(cfg.DBDirectory)
+	dbDirStat, err = os.Stat(cfg.DBDirectory)
 	if os.IsNotExist(err) {
-		return nil, fmt.Errorf("Database directory '%v' does not exist", cfg.DBDirectory)
+		err = fmt.Errorf("Database directory '%s' does not exist", cfg.DBDirectory)
+		goto failed
 	}
 	if !dbDirStat.IsDir() {
-		return nil, fmt.Errorf("Database directory '%v' exists but is not a directory", cfg.DBDirectory)
+		err = fmt.Errorf("Path '%s' exists but is not a directory", cfg.DBDirectory)
+		goto failed
 	}
 
+	if (cfg.DBtype != "sqlite3" && cfg.DBtype != "postgresql" && cfg.DBtype != "mysql") {
+		err = fmt.Errorf("Unknown database type %q - accepted values are \"mysql\", \"postgresql\", \"sqlite3\"", cfg.DBtype)
+		goto failed
+	}
 	if cfg.DBtype == "sqlite3" {
-		if cfg.DBdsn == "" {
-			cfg.DBdsn = "file:" + filepath.Join(cfg.DBDirectory, "sqlite3/data.sqlite3")
-		}
-		dataDir := filepath.Join(cfg.DBDirectory, "sqlite3")
-		err = os.MkdirAll(dataDir, os.ModePerm)
-		if err != nil {
-			return nil, fmt.Errorf("Could not create sqlite3 database directory '%s': %v", dataDir, err)
+		cfg.DBdsn = "file:" + filepath.Join(cfg.DBDirectory, "sqlite3", "data.sqlite3")
+		dataDir = filepath.Join(cfg.DBDirectory, "sqlite3")
+		if _, err = os.Stat(dataDir); errors.Is(err, os.ErrNotExist) {
+			err = os.Mkdir(dataDir, os.ModePerm)
+			if err != nil {
+				err = fmt.Errorf("Could not create sqlite3 database directory '%s': %v", dataDir, err)
+				goto failed
+			}
 		}
 	}
-	bdbDir := filepath.Join(cfg.DBDirectory, "badger")
-	err = os.MkdirAll(bdbDir, os.ModePerm)
-	if err != nil {
-		return nil, fmt.Errorf("Could not create badger database directory '%s': %v", bdbDir, err)
+	bdbDir = filepath.Join(cfg.DBDirectory, "badger")
+	if _, err = os.Stat(bdbDir); errors.Is(err, os.ErrNotExist) {
+		err = os.Mkdir(bdbDir, os.ModePerm)
+		if err != nil {
+			err = fmt.Errorf("Could not create badger database directory '%s': %v", bdbDir, err)
+			goto failed
+		}
 	}
 
 	return cfg, nil
+
+failed:
+	return nil, err
 }

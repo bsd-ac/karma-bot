@@ -22,14 +22,10 @@ import (
 	"log"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"syscall"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-	"maunium.net/go/mautrix"
-	"maunium.net/go/mautrix/event"
-	"maunium.net/go/mautrix/id"
 	"suah.dev/protect"
 
 	"bsd.ac/karma-bot/lib"
@@ -59,74 +55,35 @@ func main() {
 	// only use klog as logger from here on
 
 	klog.Debugf("Reading config file '%s'", *config)
-	cfg, err := lib.ReadConfig(*config)
-	if cfg == nil {
-		klog.Fatalf("Could not read the config file '%s': %v", *config, err)
+	kConf, err := lib.ReadConfig(*config)
+	if err != nil {
+		klog.Errorf("Error while reading the config file: %s", err.Error())
+		os.Exit(1)
 	}
 	klog.Debugf("Finished reading config file")
 
 	klog.Debugf("Securing with pledge and unveil")
-	protect.Pledge("stdio unveil rpath wpath cpath flock dns inet tty")
 	protect.Unveil("/etc/resolv.conf", "r")
 	protect.Unveil("/etc/ssl/cert.pem", "r")
-	protect.Unveil(cfg.DBDirectory, "rwxc")
+	protect.Unveil(kConf.DBDirectory, "rwxc")
 	protect.UnveilBlock()
+	protect.Pledge("stdio rpath wpath cpath flock dns inet tty")
 	klog.Debugf("Finished securing")
 
-	bdbStore, err := lib.NewBDBStore(filepath.Join(cfg.DBDirectory, "badger"))
-	if err != nil {
-		klog.Fatalf("Could not open the BDBStore: %v", err)
-	}
-	defer bdbStore.DB.Close()
-
-	sqlStore, err := lib.NewSQLStore(cfg.DBtype, cfg.DBdsn)
-	if err != nil {
-		bdbStore.DB.Close()
-		klog.Fatalf("Could not create the SQLStore: %v", err)
-	}
-	defer sqlStore.DB.Close()
-
-	klog.Infof("Creating client for %s with username %s", cfg.Homeserver, cfg.Username)
-	client, err := mautrix.NewClient(cfg.Homeserver, id.UserID(cfg.Username), cfg.AccessToken)
-	if err != nil {
-		panic(err)
-	}
-	client.Store = bdbStore
-	mautrixLogger := new(lib.MautrixLogger)
-	mautrixLogger.Logger = klog
-	client.Logger = mautrixLogger
-
-	klog.Debugf("Creating bot client")
-	syncer := client.Syncer.(*mautrix.DefaultSyncer)
-	klog.Debugf("Adding event handlers")
-	syncer.OnEventType(event.EventMessage, func(source mautrix.EventSource, evt *event.Event) {
-		lib.MessageHandler(client, source, evt, bdbStore, sqlStore)
-	})
-	/*
-		syncer.OnEventType(event.EventReaction, func(source mautrix.EventSource, evt *event.Event) {
-			lib.ReactionHandler(client, source, evt, bdbStore, sqlStore)
-		})
-		syncer.OnEventType(event.EventRedaction, func(source mautrix.EventSource, evt *event.Event) {
-			lib.RedactionHandler(client, source, evt, bdbStore, sqlStore)
-		})
-	*/
+	kbot := lib.NewKarmaBot(kConf)
 
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
 	go func() {
-		err := client.Sync()
+		err := kbot.Start()
 		if err != nil {
-			bdbStore.DB.Close()
-			sqlStore.DB.Close()
-			panic(err)
+			klog.Fatalf("Could not start the bot: %v", err)
 		}
 	}()
 
 	sig := <-done
 	klog.Infof("Caught signal '%v'", sig)
-	klog.Infof("Stopping the client...")
-	client.StopSync()
-	klog.Infof("Stopped")
-	klog.Infof("Shutting down")
+	klog.Infof("Shutting down...")
+	kbot.Stop()
 }
