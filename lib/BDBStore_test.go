@@ -31,7 +31,7 @@ func TestBDBStore(t *testing.T) {
 	}
 	defer os.RemoveAll(dbdir)
 
-	s, err := NewBDBStore(dbdir)
+	s, err := NewBDBStore(dbdir, NewBotLogger())
 	if err != nil {
 		t.Errorf("Could not create the BDBStore")
 	}
