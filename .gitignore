@@ -3,6 +3,9 @@ karma-bot.ini
 karma-bot
 db/**
 
+# emacs files
+*~undo-tree~
+
 # Binaries for programs and plugins
 *.exe
 *.exe~
