@@ -27,6 +27,7 @@ func TestKarmaUtils(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	t.Logf("Using %q as tempdir", dbDir)
 	defer os.RemoveAll(dbDir)
 
 	bLogger := NewBotLogger()
@@ -42,7 +43,65 @@ func TestKarmaUtils(t *testing.T) {
 	kBot.sqlDB = sqlStore
 	kBot.logger = bLogger
 
-	t.Log("Starting the test now")
+	userA := "@banana-bot:matrix.org"
+	userB := "@jane-doe:matrix.org"
+	event := "some-random-event-matrix.org"
+	roomA := "some-cool-room-matrix.org"
+	roomB := "other-cool-room-matrix.org"
+	var vote int64
+	vote = 1
 
 	////// t1
+	kBot.KarmaAdd(userA, userB, event, roomA, vote)
+	if kBot.GetKarmaTotal(userB) != 1 {
+		t.Errorf("t1.1 failure")
+	}
+	if kBot.GetKarmaTotal(userA) != 0 {
+		t.Errorf("t1.2 failure")
+	}
+
+	////// t2
+	kBot.OptOut(userA)
+	if kBot.GetKarmaTotal(userB) != 0 {
+		t.Errorf("t2.1 failure")
+	}
+	if kBot.GetKarmaTotal(userA) != 0 {
+		t.Errorf("t2.2 failure")
+	}
+
+	////// t3
+	kBot.KarmaAdd(userA, userB, event, roomA, vote)
+	if kBot.GetKarmaTotal(userB) != 0 {
+		t.Errorf("t3.1 failure")
+	}
+	if kBot.GetKarmaTotal(userA) != 0 {
+		t.Errorf("t3.2 failure")
+	}
+
+	////// t4
+	kBot.OptIn(userA)
+	kBot.KarmaAdd(userA, userB, event, roomA, vote)
+	kBot.KarmaAdd(userA, userB, event, roomA, vote)
+	if kBot.GetKarmaTotal(userB) != 1 {
+		t.Errorf("t4.1 failure")
+	}
+	if kBot.GetKarmaTotal(userA) != 0 {
+		t.Errorf("t4.2 failure")
+	}
+
+	////// t5
+	kBot.KarmaAdd(userA, userB, event, roomB, vote)
+	if kBot.GetKarmaTotal(userB) != 2 {
+		t.Errorf("t5.1 failure")
+	}
+	if kBot.GetKarma(userB, roomA) != 1 {
+		t.Errorf("t5.2 failure")
+	}
+	if kBot.GetKarma(userB, roomB) != 1 {
+		t.Errorf("t5.3 failure")
+	}
+	if kBot.GetKarmaTotal(userA) != 0 {
+		t.Errorf("t5.4 failure")
+	}
+
 }

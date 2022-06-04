@@ -49,7 +49,7 @@ func TestBotVersion(t *testing.T) {
 	vlen := len(varray)
 	for i := 0; i < vlen-1; i++ {
 		if BVLess(varray[i+1], varray[i]) {
-			t.Errorf("Incorrect comparison result - t2.%d", i)
+			t.Errorf("Incorrect comparison result - t3.%d", i)
 		}
 	}
 }
