@@ -104,4 +104,18 @@ func TestKarmaUtils(t *testing.T) {
 		t.Errorf("t5.4 failure")
 	}
 
+	////// t6
+	kBot.KarmaDelete(event, roomA)
+	if kBot.GetKarmaTotal(userB) != 1 {
+		t.Errorf("t6.1 failure")
+	}
+	if kBot.GetKarma(userB, roomA) != 0 {
+		t.Errorf("t6.2 failure")
+	}
+	if kBot.GetKarma(userB, roomB) != 1 {
+		t.Errorf("t6.3 failure")
+	}
+	if kBot.GetKarmaTotal(userA) != 0 {
+		t.Errorf("t6.4 failure")
+	}
 }
