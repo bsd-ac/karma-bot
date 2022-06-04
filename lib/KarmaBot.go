@@ -47,11 +47,12 @@ func (kBot *KarmaBot) Start() error {
 		return err
 	}
 
-	kBot.sqlDB, err = NewSQLStore(kBot.kConf.DBtype, kBot.kConf.DBdsn)
+	kBot.sqlDB, err = NewSQLStore(kBot.kConf.DBtype, kBot.kConf.DBdsn, kBot.logger)
 	if err != nil {
 		kBot.bDB.Close()
 		return err
 	}
+	kBot.sqlDB.UpdateDB(SQLKarmaPatches)
 
 	kBot.mClient, err = mautrix.NewClient(kBot.kConf.Homeserver, id.UserID(kBot.kConf.Username), kBot.kConf.AccessToken)
 	if err != nil {
@@ -64,7 +65,7 @@ func (kBot *KarmaBot) Start() error {
 
 	syncer := kBot.mClient.Syncer.(*mautrix.DefaultSyncer)
 	syncer.OnEventType(event.EventMessage, func(source mautrix.EventSource, evt *event.Event) {
-		MessageHandler(kBot.mClient, source, evt, kBot.bDB, kBot.sqlDB)
+		MessageHandler(source, evt, kBot)
 	})
 	/*
 	syncer.OnEventType(event.EventReaction, func(source mautrix.EventSource, evt *event.Event) {

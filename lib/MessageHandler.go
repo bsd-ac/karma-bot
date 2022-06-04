@@ -21,12 +21,12 @@ import (
 	"maunium.net/go/mautrix/event"
 )
 
-func MessageHandler(cli *mautrix.Client, source mautrix.EventSource, evt *event.Event, bdb *BDBStore, sqlDB *SQLStore) {
+func MessageHandler(source mautrix.EventSource, evt *event.Event, kBot *KarmaBot) {
 
 	body := evt.Content.AsMessage().Body
 	for _, plugin := range Plugins {
 		if plugin.MatchMessage(body) {
-			plugin.ProcessMessage(body, cli, source, evt, bdb, sqlDB)
+			plugin.ProcessMessage(body, source, evt, kBot)
 		}
 	}
 

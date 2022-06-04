@@ -20,8 +20,6 @@ import (
 	"database/sql"
 	"sort"
 
-	"go.uber.org/zap"
-
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/jackc/pgx/v4/stdlib"
 	_ "github.com/mattn/go-sqlite3"
@@ -30,9 +28,10 @@ import (
 type SQLStore struct {
 	DB     *sql.DB
 	DBtype string
+	Logger *BotLogger
 }
 
-func NewSQLStore(DBtype, DBdsn string) (*SQLStore, error) {
+func NewSQLStore(DBtype, DBdsn string, b *BotLogger) (*SQLStore, error) {
 	var err error
 	var sqlStore *SQLStore
 
@@ -47,7 +46,8 @@ func NewSQLStore(DBtype, DBdsn string) (*SQLStore, error) {
 		return nil, err
 	}
 	sqlStore.DB = sqlDB
-	return sqlStore, err
+	sqlStore.Logger = b
+	return sqlStore, nil
 }
 
 func (s *SQLStore) Close() {
@@ -58,8 +58,8 @@ func (s *SQLStore) GetVersion() (BotVersion, error) {
 	var cver BotVersion
 	err := s.DB.QueryRow(`SELECT major,minor,patch FROM version;`).Scan(&cver.Major, &cver.Minor, &cver.Patch)
 	if err != nil {
-		zap.S().Warnf("Failed to get version: %v", err)
-		zap.S().Warnf("Using default version 0.0.0")
+		s.Logger.Warnf("Failed to get version: %v", err)
+		s.Logger.Warnf("Using default version 0.0.0")
 		return BotVersion{0, 0, 0, nil}, err
 	}
 	return cver, nil
@@ -67,28 +67,23 @@ func (s *SQLStore) GetVersion() (BotVersion, error) {
 
 func (s *SQLStore) UpdateDB(dbPatches BotVersionArr) error {
 	cver, _ := s.GetVersion()
-	zap.S().Infof("Current database version is %v.%v.%v", cver.Major, cver.Minor, cver.Patch)
-	zap.S().Infof("Upgrading database to latest version...")
+	s.Logger.Infof("Current database version is %v.%v.%v", cver.Major, cver.Minor, cver.Patch)
+	s.Logger.Infof("Upgrading database to latest version...")
 	sort.Sort(dbPatches)
-	driverType := s.DB.Driver()
-	driverName, err := SQLDriverName(driverType)
-	if err != nil {
-		zap.S().Errorf("Failed to find database driver name: %v", err)
-		return err
-	}
-	zap.S().Infof("Current database driver in use: %s", driverName)
 	for _, kver := range dbPatches {
 		if !BVLess(cver, kver) {
 			continue
 		}
-		zap.S().Infof("Applying patch version %v.%v.%v", kver.Major, kver.Minor, kver.Patch)
-		err := kver.SQLPatch(s.DB, driverName)
+		s.Logger.Infof("Applying patch version %v.%v.%v", kver.Major, kver.Minor, kver.Patch)
+		err := kver.SQLPatch(s.DB, s.DBtype)
 		if err != nil {
-			zap.S().Errorf("Failed to patch: %v", err)
-			zap.S().Errorf("Aborting update of the database")
+			s.Logger.Errorf("Failed to patch: %v", err)
+			s.Logger.Errorf("Aborting update of the database")
 			return err
 		}
 	}
-	zap.S().Infof("Update finished")
+	s.Logger.Infof("Update finished")
 	return nil
 }
+
+var SQLKarmaPatches = []BotVersion{SQLPatchv_1_0_0}

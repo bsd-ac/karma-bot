@@ -17,15 +17,13 @@
 package lib
 
 import (
-	"maunium.net/go/mautrix"
-	"maunium.net/go/mautrix/event"
+	"database/sql"
 )
 
-type BotPlugin interface {
-	MatchMessage(body string) bool
-	ProcessMessage(body string, source mautrix.EventSource, evt *event.Event, kBot *KarmaBot)
+func SQLPatchv_1_0_0_(db *sql.DB, dbType string) error {
+	sqlquery := "CREATE TABLE version (present BOOL PRIMARY KEY DEFAULT TRUE, major INTEGER NOT NULL, minor INTEGER NOT NULL, patch INTEGER NOT NULL, CONSTRAINT present_uniq CHECK (present)); CREATE TABLE events (senderID VARCHAR NOT NULL, targetID VARCHAR NOT NULL, eventID VARCHAR, roomID VARCHAR, vote INTEGER NOT NULL, PRIMARY KEY(eventID, roomID)); CREATE TABLE optout (uidHash VARCHAR NOT NULL, PRIMARY KEY(uidHash)); INSERT INTO version(present, major, minor, patch) values(TRUE, 1, 0, 0);"
+	_, err := db.Exec(sqlquery)
+	return err
 }
 
-type BotPlugins []BotPlugin
-
-var Plugins = BotPlugins{&UptimeBot{}, &GetKarmaBot{}, &OptInBot{}, &OptOutBot{}}
+var SQLPatchv_1_0_0 = BotVersion{1, 0, 0, SQLPatchv_1_0_0_}

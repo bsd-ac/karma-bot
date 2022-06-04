@@ -34,6 +34,7 @@ require (
 	github.com/jackc/pgtype v1.11.0 // indirect
 	github.com/klauspost/compress v1.15.5 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
+	github.com/yuin/goldmark v1.4.12 // indirect
 	go.opencensus.io v0.23.0 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.8.0 // indirect

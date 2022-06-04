@@ -33,7 +33,7 @@ import (
 
 func main() {
 	flag := flag.NewFlagSet(os.Args[0], flag.ExitOnError)
-	debugLevel := flag.String("d", "warn", "debug level of output (debug, info, warn, error, dpanic, panic, fatal)")
+	debugLevel := flag.String("d", "error", "debug level of output (debug, info, warn, error, dpanic, panic, fatal)")
 	config := flag.String("f", "/etc/karma-bot.ini", "alternative configuration file")
 	outputFormat := flag.String("o", "console", "debug output format (console, json)")
 	flag.Parse(os.Args[1:])

@@ -18,6 +18,7 @@ package lib
 
 import (
 	"fmt"
+	"regexp"
 	"time"
 
 	"maunium.net/go/mautrix"
@@ -28,13 +29,14 @@ type UptimeBot struct {
 }
 
 func (u *UptimeBot) MatchMessage(body string) bool {
-	return body == "!uptime"
+	rexp := regexp.MustCompile(`(?i)^\!uptime\s*$`)
+	return rexp.MatchString(body)
 }
 
-func (u *UptimeBot) ProcessMessage(body string, cli *mautrix.Client, source mautrix.EventSource, evt *event.Event, bdb *BDBStore, sqlDB *SQLStore) error {
+func (u *UptimeBot) ProcessMessage(body string, source mautrix.EventSource, evt *event.Event, kBot *KarmaBot) {
 	tnow := time.Now()
 	tdiff := tnow.Sub(BotStartTime)
-	cli.Logger.Debugfln("Requested uptime - %v\n", tdiff)
+	cli := kBot.mClient
+	kBot.logger.Debugf("Requested uptime - %v\n", tdiff)
 	cli.SendText(evt.RoomID, fmt.Sprintf("I have been up for %v\n", tdiff.String()))
-	return nil
 }

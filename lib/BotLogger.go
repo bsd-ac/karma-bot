@@ -31,6 +31,10 @@ func NewBotLogger() *BotLogger {
 	return b
 }
 
+func (b *BotLogger) Warnf(f string, v ...interface{}) {
+	b.Logger.Warnf(f, v...)
+}
+
 // mautrix
 func (b *BotLogger) Debugfln(f string, v ...interface{}) {
 	b.Logger.Debugf(f, v...)

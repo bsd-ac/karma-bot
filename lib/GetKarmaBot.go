@@ -21,9 +21,9 @@ import (
 	"regexp"
 	"strings"
 
-	"go.uber.org/zap"
 	"maunium.net/go/mautrix"
 	"maunium.net/go/mautrix/event"
+	"maunium.net/go/mautrix/format"
 	"maunium.net/go/mautrix/id"
 )
 
@@ -38,20 +38,21 @@ func (u *GetKarmaBot) MatchMessage(body string) bool {
 	return gk_rexp.MatchString(body)
 }
 
-func (u *GetKarmaBot) ProcessMessage(body string, cli *mautrix.Client, source mautrix.EventSource, evt *event.Event, bdb *BDBStore, sqlDB *SQLStore) error {
+func (u *GetKarmaBot) ProcessMessage(body string, source mautrix.EventSource, evt *event.Event, kBot *KarmaBot) {
+	cli := kBot.mClient
 	htmlBody := strings.TrimSpace(evt.Content.AsMessage().FormattedBody)
-	zap.S().Debugf("Processing html '%s'", htmlBody)
+	kBot.logger.Debugf("Processing html '%s'", htmlBody)
 	href := gk_rexp.ReplaceAllString(htmlBody, "$1")
-	zap.S().Debugf("Processing href '%s'", href)
+	kBot.logger.Debugf("Processing href '%s'", href)
 	targetID := HTMLToUserID(href)
-	zap.S().Debugf("Got userID '%s'", targetID)
+	kBot.logger.Debugf("Got userID '%s'", targetID)
 	targetID = strings.TrimSpace(targetID)
 	if targetID == "" {
-		zap.S().Warnf("Could not parse user from html, defaulting to sender")
+		kBot.logger.Warnf("Could not parse user from html, defaulting to sender")
 		targetID = evt.Sender.String() // query self
 		dname, err := cli.GetDisplayName(id.UserID(targetID))
 		if err != nil {
-			zap.S().Warnf("Could not get display name for '%s'", targetID)
+			kBot.logger.Warnf("Could not get display name for '%s'", targetID)
 			href = "<name unknown>"
 		} else {
 			href = dname.DisplayName
@@ -60,18 +61,15 @@ func (u *GetKarmaBot) ProcessMessage(body string, cli *mautrix.Client, source ma
 	targetID = strings.TrimSpace(targetID)
 
 	msg := ""
-	optOut, _ := KarmaIsOptOut(targetID, bdb)
-	zap.S().Debugf("Current opt out status for '%s': %t", targetID, optOut)
+	optOut := kBot.IsOptOut(targetID)
+	kBot.logger.Debugf("Current opt out status for '%s': %t", targetID, optOut)
 	if optOut {
 		msg = "Unknown user"
 	} else {
-		karma, err := GetKarma(targetID, bdb)
-		if err != nil {
-			zap.S().Warnf("Could not get karma, defaulting to 0, for '%s': %v", targetID, err)
-		}
+		karma := kBot.GetKarma(targetID, evt.RoomID.String())
 		msg = fmt.Sprintf("Current karma for %s: %d", href, karma)
 	}
 
-	cli.SendText(evt.RoomID, msg)
-	return nil
+	htmlMsg := format.RenderMarkdown(msg, true, true)
+	cli.SendMessageEvent(evt.RoomID, event.EventMessage, &htmlMsg)
 }

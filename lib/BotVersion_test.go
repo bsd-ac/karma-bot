@@ -43,7 +43,7 @@ func TestBotVersion(t *testing.T) {
 		t.Errorf("Incorrect comparison result - t2")
 	}
 
-	///// t2
+	///// t3
 	varray := BotVersionArr{{1, 2, 3, nil}, {3, 1, 2, nil}, {1, 1, 1, nil}, {1, 0, 1, nil}, {1, 1, 1, nil}, {1, 0, 1, nil}}
 	sort.Sort(varray)
 	vlen := len(varray)

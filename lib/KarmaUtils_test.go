@@ -17,17 +17,32 @@
 package lib
 
 import (
-	"database/sql"
-
-	"go.uber.org/zap"
+	"path/filepath"
+	"os"
+	"testing"
 )
 
-func SQLpatchv_1_0_0(db *sql.DB, driverName string) error {
-	sqlquery := "CREATE TABLE IF NOT EXISTS version (present BOOL PRIMARY KEY DEFAULT TRUE, major INTEGER NOT NULL, minor INTEGER NOT NULL, patch INTEGER NOT NULL, CONSTRAINT present_uniq CHECK (present)); CREATE TABLE IF NOT EXISTS votes (senderID VARCHAR NOT NULL, targetID VARCHAR NOT NULL, eventID VARCHAR, roomID VARCHAR, vote INTEGER NOT NULL, PRIMARY KEY(senderID, targetID, eventID, roomID)); INSERT INTO version(present, major, minor, patch) values(TRUE, 1, 0, 0);"
-	_, err := db.Exec(sqlquery)
+func TestKarmaUtils(t *testing.T) {
+	dbDir, err := os.MkdirTemp("", "*")
 	if err != nil {
-		zap.S().Errorf("Error while applying patch 1.0.0: %v", err)
-		return err
+		t.Fatal(err)
 	}
-	return nil
+	defer os.RemoveAll(dbDir)
+
+	bLogger := NewBotLogger()
+	sqlStore, err := NewSQLStore("sqlite3", "file:" + filepath.Join(dbDir, "data.sqlite3"), bLogger)
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = sqlStore.UpdateDB(SQLKarmaPatches)
+	if err != nil {
+		t.Fatal(err)
+	}
+	kBot := new(KarmaBot)
+	kBot.sqlDB = sqlStore
+	kBot.logger = bLogger
+
+	t.Log("Starting the test now")
+
+	////// t1
 }

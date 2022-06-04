@@ -18,19 +18,10 @@
 package lib
 
 import (
-	"encoding/binary"
-
-	"go.uber.org/zap"
 	"golang.org/x/crypto/blake2b"
 )
 
-/*
-"go.uber.org/zap"
-"maunium.net/go/mautrix"
-"maunium.net/go/mautrix/id"
-*/
-
-func uid2OptOutKey(userID string) []byte {
+func uidHash(userID string) []byte {
 	optOut := []byte("optOutUID_")
 	uid := []byte(userID)
 	blake2b_uid := blake2b.Sum512(uid)
@@ -38,44 +29,78 @@ func uid2OptOutKey(userID string) []byte {
 	return uid_key
 }
 
-func uid2KarmaKey(userID string) []byte {
-	return []byte("karmaUID_" + userID)
-}
-
-func KarmaIsOptOut(userID string, s *BDBStore) (bool, error) {
-	uid_key := uid2OptOutKey(userID)
-	zap.S().Debugf("opt key for '%s': %v", userID, uid_key)
-	_, err := s.Get(uid_key)
-	if err != nil {
-		return false, err
+func (kBot *KarmaBot) IsOptOut(userID string) bool {
+	uhash := uidHash(userID)
+	query := `SELECT COUNT(*) FROM optout WHERE uidHash = ?`
+	var ucount int64
+	err := kBot.sqlDB.DB.QueryRow(query, uhash).Scan(&ucount)
+	if err == nil && ucount > 0 {
+		return true
 	}
-	return true, nil
-}
-
-func KarmaOptOut(userID string, s *BDBStore) error {
-	uid_key := uid2OptOutKey(userID)
-	zap.S().Debugf("opt key for '%s': %v", userID, uid_key)
-	val := []byte{0}
-	return s.Set(uid_key, val)
-}
-
-func KarmaOptIn(userID string, s *BDBStore) error {
-	uid_key := uid2OptOutKey(userID)
-	zap.S().Debugf("opt key for '%s': %v", userID, uid_key)
-	return s.Delete(uid_key)
-}
-
-func GetKarma(userID string, s *BDBStore) (int64, error) {
-	val, err := s.Get(uid2KarmaKey(userID))
 	if err != nil {
-		return 0, err
+		kBot.logger.Warnf("Error in IsOptOut for user %q: %v", userID, err)
 	}
-	karma, _ := binary.Varint(val)
-	return karma, err
+	return false
 }
 
-func SetKarma(userID string, karma int64, s *BDBStore) error {
-	buf := make([]byte, binary.MaxVarintLen64)
-	binary.PutVarint(buf, karma)
-	return s.Set(uid2KarmaKey(userID), buf)
+func (kBot *KarmaBot) OptOut(userID string) {
+	query := `DELETE FROM events WHERE senderID = ? OR targetID = ?`
+	_, err := kBot.sqlDB.DB.Exec(query, userID, userID)
+	if err != nil {
+		kBot.logger.Warnf("Error in OptOut while deleting user from events %q: %v", userID, err)
+	}
+	uhash := uidHash(userID)
+	query = `INSERT INTO optout (uidHash) VALUES (?)`
+	_, err = kBot.sqlDB.DB.Exec(query, uhash)
+	if err != nil {
+		kBot.logger.Warnf("Error in OptOut while inserting hash for user %q: %v", userID, err)
+	}
+}
+
+func (kBot *KarmaBot) OptIn(userID string) {
+	uhash := uidHash(userID)
+	query := `DELETE FROM optout WHERE uidHash = ?`
+	_, err := kBot.sqlDB.DB.Exec(query, uhash)
+	if err != nil {
+		kBot.logger.Warnf("Error in OptIn for user %q: %v", userID, err)
+	}
+}
+
+func (kBot *KarmaBot) GetKarma(userID, roomID string) int64 {
+	query := `SELECT SUM(vote) FROM events WHERE targetID = ? AND roomID = ?`
+	var karma int64
+	err := kBot.sqlDB.DB.QueryRow(query, userID, roomID).Scan(&karma)
+	if err != nil {
+		kBot.logger.Warnf("Error in GetKarm for user %q: %v", userID, err)
+		karma = 0
+	}
+	return karma
+}
+
+func (kBot *KarmaBot) GetKarmaTotal(userID string) int64 {
+	query := `SELECT SUM(vote) FROM events WHERE targetID = ?`
+	var karma int64
+	err := kBot.sqlDB.DB.QueryRow(query, userID).Scan(&karma)
+	if err != nil {
+		kBot.logger.Warnf("Error in GetKarmaTotal for user %q: %v", userID, err)
+		karma = 0
+	}
+
+	return karma
+}
+
+func (kBot *KarmaBot) KarmaAdd(senderID, targetID, eventID, roomID string, vote int64) {
+	query := `INSERT INTO events (senderID, targetID, eventID, roomID, vote) VALUES (?, ?, ?, ?, ?)`
+	_, err := kBot.sqlDB.DB.Exec(query, senderID, targetID, eventID, roomID, vote)
+	if err != nil {
+		kBot.logger.Warnf("Error in KarmaAdd for (%s, %s, %s, %s, %d): %v", senderID, targetID, eventID, roomID, vote, err)
+	}
+}
+
+func (kBot *KarmaBot) KarmaDelete(eventID, roomID string) {
+	query := `DELETE FROM events WHERE eventID = ? AND roomID = ?`
+	_, err := kBot.sqlDB.DB.Exec(query, eventID, roomID)
+	if err != nil {
+		kBot.logger.Warnf("Error in KarmaDelete for (%s, %s): %v", eventID, roomID, err)
+	}
 }
