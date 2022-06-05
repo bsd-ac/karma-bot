@@ -57,8 +57,7 @@ func main() {
 	klog.Debugf("Reading config file '%s'", *config)
 	kConf, err := lib.ReadConfig(*config)
 	if err != nil {
-		klog.Errorf("Error while reading the config file: %s", err.Error())
-		os.Exit(1)
+		klog.Fatalf("Error while reading the config file: %s", err.Error())
 	}
 	klog.Debugf("Finished reading config file")
 
