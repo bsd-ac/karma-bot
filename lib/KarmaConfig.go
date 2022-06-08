@@ -26,15 +26,17 @@ import (
 )
 
 type KarmaConfig struct {
-	Username     string `ini:"Username"`
-	AccessToken  string `ini:"AccessToken"`
-	Homeserver   string `ini:"Homeserver"`
-	DebugLevel   int    `ini:"DebugLevel"`
-	Autojoin     bool   `ini:"Autojoin"`
-	DBDirectory  string `ini:"DBDirectory"`
-	DBtype       string `ini:"DBtype"`
-	DBdsn        string `ini:"DBdsn"`
-	ResponseFreq int64  `ini:"ResponseFreq"`
+	Username       string `ini:"Username"`
+	AccessToken    string `ini:"AccessToken"`
+	Homeserver     string `ini:"Homeserver"`
+	DebugLevel     int    `ini:"DebugLevel"`
+	Autojoin       bool   `ini:"Autojoin"`
+	DBDirectory    string `ini:"DBDirectory"`
+	DBtype         string `ini:"DBtype"`
+	DBdsn          string `ini:"DBdsn"`
+	ResponseFreq   int64  `ini:"ResponseFreq"`
+	PositiveEmojis string `ini:"PositiveEmojis"`
+	NegativeEmojis string `ini:"NegativeEmojis"`
 }
 
 func ReadConfig(ConfigFile string) (*KarmaConfig, error) {
@@ -52,6 +54,8 @@ func ReadConfig(ConfigFile string) (*KarmaConfig, error) {
 	cfg.Autojoin = false
 	cfg.DBDirectory = "/var/db/karma-bot"
 	cfg.ResponseFreq = 5000000 // 5 seconds
+	cfg.PositiveEmojis = ""
+	cfg.NegativeEmojis = ""
 
 	// valid SQL driver name: sqlite3, mysql, postgresql
 	cfg.DBtype = "sqlite3"
