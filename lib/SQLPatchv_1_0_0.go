@@ -21,9 +21,19 @@ import (
 )
 
 func SQLPatchv_1_0_0_(db *sql.DB, dbType string) error {
-	sqlquery := "CREATE TABLE version (present BOOL PRIMARY KEY DEFAULT TRUE, major INTEGER NOT NULL, minor INTEGER NOT NULL, patch INTEGER NOT NULL, CONSTRAINT present_uniq CHECK (present)); CREATE TABLE events (senderID VARCHAR NOT NULL, targetID VARCHAR NOT NULL, eventID VARCHAR, roomID VARCHAR, vote INTEGER NOT NULL, PRIMARY KEY(eventID, roomID)); CREATE TABLE optout (uidHash VARCHAR NOT NULL, PRIMARY KEY(uidHash)); INSERT INTO version(present, major, minor, patch) values(TRUE, 1, 0, 0);"
-	_, err := db.Exec(sqlquery)
-	return err
+	queries := []string{
+		`CREATE TABLE version (present BOOL PRIMARY KEY DEFAULT TRUE, major INTEGER NOT NULL, minor INTEGER NOT NULL, patch INTEGER NOT NULL, CONSTRAINT present_uniq CHECK (present));`,
+		"CREATE TABLE events (senderID VARCHAR(1000) NOT NULL, targetID VARCHAR(1000) NOT NULL, eventID VARCHAR(375), roomID VARCHAR(375), vote INTEGER NOT NULL, PRIMARY KEY(eventID, roomID));",
+		"CREATE TABLE optout (uidHash VARCHAR(750) NOT NULL, PRIMARY KEY(uidHash));",
+		"INSERT INTO version(present, major, minor, patch) values(TRUE, 1, 0, 0);",
+	}
+	for _, query := range queries {
+		_, err := db.Exec(query)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 var SQLPatchv_1_0_0 = BotVersion{1, 0, 0, SQLPatchv_1_0_0_}
