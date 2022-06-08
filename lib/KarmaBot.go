@@ -65,7 +65,17 @@ func (kBot *KarmaBot) Start() error {
 
 	syncer := kBot.mClient.Syncer.(*mautrix.DefaultSyncer)
 
+	if kBot.kConf.Autojoin {
+		syncer.OnEventType(event.StateMember, func(source mautrix.EventSource, evt *event.Event){
+			emem := evt.Content.AsMember()
+			if emem.Membership == event.MembershipInvite {
+				kBot.logger.Debugf("RoomID = %v", evt.RoomID.String())
+				kBot.mClient.JoinRoomByID(evt.RoomID)
+			}
+		})
+	}
 	syncer.OnEventType(event.EventMessage, func(source mautrix.EventSource, evt *event.Event) {
+		kBot.logger.Debugf("Got message event")
 		MessageHandler(source, evt, kBot)
 	})
 	syncer.OnEventType(event.EventReaction, func(source mautrix.EventSource, evt *event.Event) {
@@ -76,7 +86,7 @@ func (kBot *KarmaBot) Start() error {
 	})
 	err = kBot.mClient.Sync()
 
-	if (err != nil) {
+	if err != nil {
 		kBot.bDB.Close()
 		kBot.sqlDB.Close()
 	}
