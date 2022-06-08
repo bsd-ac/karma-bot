@@ -26,12 +26,24 @@ import (
 type OptOutBot struct {
 }
 
-func (u *OptOutBot) MatchMessage(body string) bool {
-	rexp := regexp.MustCompile(`(?i)^\!optout\s*$`)
-	return rexp.MatchString(body)
+func (u *OptOutBot) ID() string {
+	return "OptOutBot"
 }
 
-func (u *OptOutBot) ProcessMessage(body string, source mautrix.EventSource, evt *event.Event, kBot *KarmaBot) {
+func (u *OptOutBot) NeedsTimer() bool {
+	return false
+}
+
+func (u *OptOutBot) Re() *regexp.Regexp {
+	return regexp.MustCompile(`(?i)^\!optout\s*$`)
+}
+
+func (u *OptOutBot) ProcessMessage(body string, source mautrix.EventSource, evt *event.Event, kBot *KarmaBot) bool {
+	rexp := u.Re()
+	if !rexp.MatchString(body) {
+		return false
+	}
 	senderID := evt.Sender.String()
 	kBot.OptOut(senderID)
+	return true
 }

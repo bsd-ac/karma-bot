@@ -26,12 +26,24 @@ import (
 type OptInBot struct {
 }
 
-func (u *OptInBot) MatchMessage(body string) bool {
-	rexp := regexp.MustCompile(`(?i)^\!optin\s*$`)
-	return rexp.MatchString(body)
+func (u *OptInBot) ID() string {
+	return "OptInBot"
 }
 
-func (u *OptInBot) ProcessMessage(body string, source mautrix.EventSource, evt *event.Event, kBot *KarmaBot) {
+func (u *OptInBot) NeedsTimer() bool {
+	return false
+}
+
+func (u *OptInBot) Re() *regexp.Regexp {
+	return regexp.MustCompile(`(?i)^\!optin\s*$`)
+}
+
+func (u *OptInBot) ProcessMessage(body string, source mautrix.EventSource, evt *event.Event, kBot *KarmaBot) bool {
+	rexp := u.Re()
+	if !rexp.MatchString(body) {
+		return false
+	}
 	senderID := evt.Sender.String()
 	kBot.OptIn(senderID)
+	return true
 }

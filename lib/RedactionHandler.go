@@ -17,26 +17,11 @@
 package lib
 
 import (
-	"fmt"
-	"regexp"
-
 	"maunium.net/go/mautrix"
 	"maunium.net/go/mautrix/event"
 )
 
-func RedactionHandler(_ *mautrix.Client, source mautrix.EventSource, evt *event.Event, bdb *BDBStore, sqlDB *SQLStore) {
-	fmt.Printf("<%[1]s> %[4]s (%[2]s/%[3]s)\n", evt.Sender, evt.Type.String(), evt.ID, evt.Content.AsMessage().FormattedBody)
-
-	regex_arr := [4]string{`(?i)^thanks\s(.+)$`, `(?i)^thank you\s(.+)$`, `(?i)^(.+):\sthank you$`, `(?i)^(.+):\sthanks$`}
-
-	body := evt.Content.AsMessage().Body
-	for _, pat := range regex_arr {
-		re := regexp.MustCompile(pat)
-		if re.MatchString(body) {
-			person := re.ReplaceAllString(body, "$1")
-			fmt.Printf("person = %v\n", person)
-		} else {
-			fmt.Printf("no person found\n")
-		}
-	}
+func RedactionHandler(source mautrix.EventSource, evt *event.Event, kBot *KarmaBot) {
+	kBot.logger.Debugf("Calling RedactionHandler")
+	kBot.KarmaDelete(evt.Redacts.String(), evt.RoomID.String())
 }

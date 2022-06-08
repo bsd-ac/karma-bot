@@ -26,14 +26,15 @@ import (
 )
 
 type KarmaConfig struct {
-	Username    string `ini:"Username"`
-	AccessToken string `ini:"AccessToken"`
-	Homeserver  string `ini:"Homeserver"`
-	DebugLevel  int    `ini:"DebugLevel"`
-	Autojoin    bool   `ini:"Autojoin"`
-	DBDirectory string `ini:"DBDirectory"`
-	DBtype      string `ini:"DBtype"`
-	DBdsn       string `ini:"DBdsn"`
+	Username     string `ini:"Username"`
+	AccessToken  string `ini:"AccessToken"`
+	Homeserver   string `ini:"Homeserver"`
+	DebugLevel   int    `ini:"DebugLevel"`
+	Autojoin     bool   `ini:"Autojoin"`
+	DBDirectory  string `ini:"DBDirectory"`
+	DBtype       string `ini:"DBtype"`
+	DBdsn        string `ini:"DBdsn"`
+	ResponseFreq int64  `ini:"ResponseFreq"`
 }
 
 func ReadConfig(ConfigFile string) (*KarmaConfig, error) {
@@ -50,6 +51,7 @@ func ReadConfig(ConfigFile string) (*KarmaConfig, error) {
 	cfg.DebugLevel = 0
 	cfg.Autojoin = false
 	cfg.DBDirectory = "/var/db/karma-bot"
+	cfg.ResponseFreq = 5000000 // 5 seconds
 
 	// valid SQL driver name: sqlite3, mysql, postgresql
 	cfg.DBtype = "sqlite3"
@@ -98,7 +100,7 @@ func ReadConfig(ConfigFile string) (*KarmaConfig, error) {
 		goto failed
 	}
 
-	if (cfg.DBtype != "sqlite3" && cfg.DBtype != "postgresql" && cfg.DBtype != "mysql") {
+	if cfg.DBtype != "sqlite3" && cfg.DBtype != "postgresql" && cfg.DBtype != "mysql" {
 		err = fmt.Errorf("Unknown database type %q - accepted values are \"mysql\", \"postgresql\", \"sqlite3\"", cfg.DBtype)
 		goto failed
 	}

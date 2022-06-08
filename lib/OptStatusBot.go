@@ -27,31 +27,29 @@ import (
 	"maunium.net/go/mautrix/id"
 )
 
-type GetKarmaBot struct {
+type OptStatusBot struct {
 }
 
-func (u *GetKarmaBot) ID() string {
-	return "GetKarmaBot"
+func (u *OptStatusBot) ID() string {
+	return "OptStatusBot"
 }
 
-func (u *GetKarmaBot) NeedsTimer() bool {
+func (u *OptStatusBot) NeedsTimer() bool {
 	return true
 }
 
-func (u *GetKarmaBot) Re() *regexp.Regexp {
-	return regexp.MustCompile(`(?i)\!karma(.*)$`)
+func (u *OptStatusBot) Re() *regexp.Regexp {
+	return regexp.MustCompile(`(?i)^\!optstatus(.*)$`)
 }
 
-func (u *GetKarmaBot) ProcessMessage(body string, source mautrix.EventSource, evt *event.Event, kBot *KarmaBot) bool {
+func (u *OptStatusBot) ProcessMessage(body string, source mautrix.EventSource, evt *event.Event, kBot *KarmaBot) bool {
 	rexp := u.Re()
-	if !rexp.MatchString(body){
+	if !rexp.MatchString(body) {
 		return false
 	}
 	cli := kBot.mClient
 	htmlBody := strings.TrimSpace(evt.Content.AsMessage().FormattedBody)
-	kBot.logger.Debugf("Processing html '%s'", htmlBody)
 	href := rexp.ReplaceAllString(htmlBody, "$1")
-	kBot.logger.Debugf("Processing href '%s'", href)
 	targetID := HTMLToUserID(href)
 	kBot.logger.Debugf("Got userID '%s'", targetID)
 	targetID = strings.TrimSpace(targetID)
@@ -66,17 +64,14 @@ func (u *GetKarmaBot) ProcessMessage(body string, source mautrix.EventSource, ev
 			href = dname.DisplayName
 		}
 	}
-	targetID = strings.TrimSpace(targetID)
 
 	msg := ""
 	optOut := kBot.IsOptOut(targetID)
-	kBot.logger.Debugf("Current opt out status for '%s': %t", targetID, optOut)
+	optStatus := "in"
 	if optOut {
-		msg = "Unknown user"
-	} else {
-		karma := kBot.GetKarma(targetID, evt.RoomID.String())
-		msg = fmt.Sprintf("Current karma for %s: %d", href, karma)
+		optStatus = "out of"
 	}
+	msg = fmt.Sprintf("%s is currently opted %s the system", href, optStatus)
 
 	htmlMsg := format.RenderMarkdown(msg, true, true)
 	cli.SendMessageEvent(evt.RoomID, event.EventMessage, &htmlMsg)

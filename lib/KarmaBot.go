@@ -64,6 +64,7 @@ func (kBot *KarmaBot) Start() error {
 	kBot.mClient.Logger = kBot.logger
 
 	syncer := kBot.mClient.Syncer.(*mautrix.DefaultSyncer)
+
 	syncer.OnEventType(event.EventMessage, func(source mautrix.EventSource, evt *event.Event) {
 		MessageHandler(source, evt, kBot)
 	})
@@ -71,10 +72,10 @@ func (kBot *KarmaBot) Start() error {
 	syncer.OnEventType(event.EventReaction, func(source mautrix.EventSource, evt *event.Event) {
 		ReactionHandler(client, source, evt, kBot.bDB, kBot.sqlDB)
 	})
-	syncer.OnEventType(event.EventRedaction, func(source mautrix.EventSource, evt *event.Event) {
-		RedactionHandler(client, source, evt, kBot.bDB, kBot.sqlDB)
-	})
 	*/
+	syncer.OnEventType(event.EventRedaction, func(source mautrix.EventSource, evt *event.Event) {
+		RedactionHandler(source, evt, kBot)
+	})
 	err = kBot.mClient.Sync()
 
 	if (err != nil) {
@@ -88,4 +89,8 @@ func (kBot *KarmaBot) Stop() {
 	kBot.mClient.StopSync()
 	kBot.bDB.Close()
 	kBot.sqlDB.Close()
+}
+
+func (kBot *KarmaBot) WhoAmI() id.UserID {
+	return kBot.mClient.UserID
 }

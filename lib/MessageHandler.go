@@ -17,28 +17,37 @@
 package lib
 
 import (
+	"time"
+
 	"maunium.net/go/mautrix"
 	"maunium.net/go/mautrix/event"
 )
 
+var RoomTimers = make(map[string]int64)
+
+type MessagePlugin interface {
+	ID() string
+	NeedsTimer() bool
+	ProcessMessage(body string, source mautrix.EventSource, evt *event.Event, kBot *KarmaBot) bool
+}
+
+var MessagePlugins = []MessagePlugin{&UptimeBot{}, &GetKarmaBot{}, &OptInBot{}, &OptOutBot{}, &OptStatusBot{}, &ThankYouBot{}}
+
 func MessageHandler(source mautrix.EventSource, evt *event.Event, kBot *KarmaBot) {
-
-	body := evt.Content.AsMessage().Body
-	for _, plugin := range Plugins {
-		if plugin.MatchMessage(body) {
-			plugin.ProcessMessage(body, source, evt, kBot)
-		}
+	if evt.Sender == kBot.WhoAmI() {
+		return
 	}
-
-	/*
-		for _, pat := range regex_arr {
-			re := regexp.MustCompile(pat)
-			if re.MatchString(body) {
-				person := re.ReplaceAllString(body, "$1")
-				cli.Logger.Debugfln("person = %v\n", person)
-			} else {
-				cli.Logger.Debugfln("no person found\n")
+	body := evt.Content.AsMessage().Body
+	tnow := time.Now().UnixMicro()
+	roomID := evt.RoomID.String()
+	if _, ok := RoomTimers[roomID]; !ok {
+		RoomTimers[roomID] = 0
+	}
+	for _, plugin := range MessagePlugins {
+		if !plugin.NeedsTimer() || tnow - RoomTimers[plugin.ID()] > kBot.kConf.ResponseFreq {
+			if plugin.ProcessMessage(body, source, evt, kBot) {
+				RoomTimers[plugin.ID()] = tnow
 			}
 		}
-	*/
+	}
 }

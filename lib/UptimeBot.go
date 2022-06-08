@@ -28,15 +28,27 @@ import (
 type UptimeBot struct {
 }
 
-func (u *UptimeBot) MatchMessage(body string) bool {
-	rexp := regexp.MustCompile(`(?i)^\!uptime\s*$`)
-	return rexp.MatchString(body)
+func (u *UptimeBot) ID() string {
+	return "UptimeBot"
 }
 
-func (u *UptimeBot) ProcessMessage(body string, source mautrix.EventSource, evt *event.Event, kBot *KarmaBot) {
+func (u *UptimeBot) NeedsTimer() bool {
+	return true
+}
+
+func (u *UptimeBot) Re() *regexp.Regexp {
+	return regexp.MustCompile(`(?i)^\!uptime\s*$`)
+}
+
+func (u *UptimeBot) ProcessMessage(body string, source mautrix.EventSource, evt *event.Event, kBot *KarmaBot) bool {
+	rexp := u.Re()
+	if !rexp.MatchString(body){
+		return false
+	}
+	kBot.logger.Debugf("Calling UptimeBot")
 	tnow := time.Now()
 	tdiff := tnow.Sub(BotStartTime)
 	cli := kBot.mClient
-	kBot.logger.Debugf("Requested uptime - %v\n", tdiff)
 	cli.SendText(evt.RoomID, fmt.Sprintf("I have been up for %v\n", tdiff.String()))
+	return true
 }
