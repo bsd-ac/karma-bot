@@ -38,7 +38,7 @@ func (u *ThankYouBot) NeedsTimer() bool {
 func (u *ThankYouBot) Re() []*regexp.Regexp {
 	return []*regexp.Regexp{
 		regexp.MustCompile(`(?i)(thanks(\s+a\s+(lot|bunch))?|thank\s+you(\s+very\s+much)?)\s+(<a\s+href=".+/(.+)">.+</a>)`),
-		regexp.MustCompile(`(?i)(<a\s+href=".+/(.+)">.+</a>)(\s*:\s*)?\s*(thanks(\s+a\s+(lot|bunch))?|thank\s+you(\s+very\s+much)?)`),
+		regexp.MustCompile(`(?i)(<a\s+href=".+/(.+)">.+</a>)(\s*:\s*)?\s*(thanks(\s+a\s+(lot|bunch))?|thank\s+you(\s+very\s+much)?|\++)`),
 	}
 }
 
