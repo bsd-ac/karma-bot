@@ -102,7 +102,7 @@ func ReadConfig(ConfigFile string) (*KarmaConfig, error) {
 		goto failed
 	}
 
-	if cfg.DBtype != "sqlite3" && cfg.DBtype != "postgresql" && cfg.DBtype != "mysql" {
+	if cfg.DBtype != "sqlite3" && cfg.DBtype != "pgx" && cfg.DBtype != "mysql" {
 		err = fmt.Errorf("Unknown database type %q - accepted values are \"mysql\", \"postgresql\", \"sqlite3\"", cfg.DBtype)
 		goto failed
 	}
