@@ -39,7 +39,7 @@ func (u *GetKarmaBot) NeedsTimer() bool {
 }
 
 func (u *GetKarmaBot) Re() *regexp.Regexp {
-	return regexp.MustCompile(`(?i)\!karma(.*)$`)
+	return regexp.MustCompile(`(?i)\!karma(total)?(.*)$`)
 }
 
 func (u *GetKarmaBot) ProcessMessage(body string, source mautrix.EventSource, evt *event.Event, kBot *KarmaBot) bool {
@@ -50,7 +50,7 @@ func (u *GetKarmaBot) ProcessMessage(body string, source mautrix.EventSource, ev
 	cli := kBot.mClient
 	htmlBody := strings.TrimSpace(evt.Content.AsMessage().FormattedBody)
 	kBot.logger.Debugf("Processing html '%s'", htmlBody)
-	href := rexp.ReplaceAllString(htmlBody, "$1")
+	href := rexp.ReplaceAllString(htmlBody, "$2")
 	kBot.logger.Debugf("Processing href '%s'", href)
 	targetID := HTMLToUserID(href)
 	kBot.logger.Debugf("Got userID '%s'", targetID)
@@ -74,7 +74,13 @@ func (u *GetKarmaBot) ProcessMessage(body string, source mautrix.EventSource, ev
 	if optOut {
 		msg = "Unknown user"
 	} else {
-		karma := kBot.GetKarma(targetID, evt.RoomID.String())
+		var karma int64
+		if rexp.ReplaceAllString(htmlBody, "$1") == "total" {
+			karma = kBot.GetKarmaTotal(targetID)
+
+		} else {
+			karma = kBot.GetKarma(targetID, evt.RoomID.String())
+		}
 		msg = fmt.Sprintf("Current karma for %s: %d", href, karma)
 	}
 
