@@ -65,8 +65,12 @@ func main() {
 	protect.Unveil("/etc/resolv.conf", "r")
 	protect.Unveil("/etc/ssl/cert.pem", "r")
 	protect.Unveil(kConf.DBDirectory, "rwxc")
+	for _, udir := range kConf.UnveilInfo {
+		klog.Debugf("Unveiling manually specified directory '%s' - '%s'", udir.Dir, udir.Perms)
+		protect.Unveil(udir.Dir, udir.Perms)
+	}
 	protect.UnveilBlock()
-	protect.Pledge("stdio rpath wpath cpath flock dns inet tty")
+	protect.Pledge("stdio rpath wpath cpath flock dns inet unix tty")
 	klog.Debugf("Finished securing")
 
 	kbot := lib.NewKarmaBot(kConf)

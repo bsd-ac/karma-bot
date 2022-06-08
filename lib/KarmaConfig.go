@@ -21,21 +21,29 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"gopkg.in/ini.v1"
 )
 
+type UnveilInfo struct {
+	Dir   string
+	Perms string
+}
+
 type KarmaConfig struct {
-	Username       string `ini:"Username"`
-	AccessToken    string `ini:"AccessToken"`
-	Homeserver     string `ini:"Homeserver"`
-	Autojoin       bool   `ini:"Autojoin"`
-	DBDirectory    string `ini:"DBDirectory"`
-	DBtype         string `ini:"DBtype"`
-	DBdsn          string `ini:"DBdsn"`
-	ResponseFreq   int64  `ini:"ResponseFreq"`
-	PositiveEmojis string `ini:"PositiveEmojis"`
-	NegativeEmojis string `ini:"NegativeEmojis"`
+	Username       string   `ini:"Username"`
+	AccessToken    string   `ini:"AccessToken"`
+	Homeserver     string   `ini:"Homeserver"`
+	Autojoin       bool     `ini:"Autojoin"`
+	DBDirectory    string   `ini:"DBDirectory"`
+	DBtype         string   `ini:"DBtype"`
+	DBdsn          string   `ini:"DBdsn"`
+	ResponseFreq   int64    `ini:"ResponseFreq"`
+	PositiveEmojis string   `ini:"PositiveEmojis"`
+	NegativeEmojis string   `ini:"NegativeEmojis"`
+	UnveilDirs     []string `init:"UnveilDirs"`
+	UnveilInfo     []UnveilInfo
 }
 
 func ReadConfig(ConfigFile string) (*KarmaConfig, error) {
@@ -44,6 +52,9 @@ func ReadConfig(ConfigFile string) (*KarmaConfig, error) {
 	var bdbDir string
 	var dataDir string
 	var dbDirStat os.FileInfo
+	var i int
+	var uinfo string
+	var udir []string
 
 	cfg := new(KarmaConfig)
 	cfg.Username = ""
@@ -54,19 +65,10 @@ func ReadConfig(ConfigFile string) (*KarmaConfig, error) {
 	cfg.ResponseFreq = 5000000 // 5 seconds
 	cfg.PositiveEmojis = "❤️,👍️,💯,🍌,🎉,💞,💗,💓,💖,💘,💝,💕,😻,😍,❤️‍🔥"
 	cfg.NegativeEmojis = "👎️,💔,😠,👿,🙁,☹️,🤬,☠️,💀"
+	cfg.UnveilDirs = []string{}
 
-	// valid SQL driver name: sqlite3, mysql, postgresql
+	// valid SQL driver name: sqlite3, mysql, pgx
 	cfg.DBtype = "sqlite3"
-	// Data Source Name (DSN) examples:
-	// sqlite   - file:/var/db/karma-bot/sqlite3/data.sqlite3
-	// postgres -
-	//            postgres://username:password@localhost:5432/dbName
-	//            postgres://username:password@%2Fvar%2Frun%2Fpostgresql/dbName
-	//
-	// mysql    -
-	//            username:password@tcp(localhost:3306)/dbName
-	//            username:password@unix(/tmp/mysql.sock)/dbName
-	//
 	cfg.DBdsn = ""
 
 	err = ini.MapTo(cfg, ConfigFile)
@@ -124,6 +126,18 @@ func ReadConfig(ConfigFile string) (*KarmaConfig, error) {
 			err = fmt.Errorf("Could not create badger database directory '%s': %v", bdbDir, err)
 			goto failed
 		}
+	}
+
+	i = len(cfg.UnveilDirs)
+	cfg.UnveilInfo = make([]UnveilInfo, i, i)
+	for i, uinfo = range cfg.UnveilDirs {
+		udir = strings.SplitN(uinfo, ":", 2)
+		if len(udir) < 2 || udir[0] == "" || udir[1] == "" {
+			err = fmt.Errorf("Could not get unveil information from '%s'", uinfo)
+			goto failed
+		}
+		cfg.UnveilInfo[i].Perms = udir[0]
+		cfg.UnveilInfo[i].Dir = udir[1]
 	}
 
 	return cfg, nil

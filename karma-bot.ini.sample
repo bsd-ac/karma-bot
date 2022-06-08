@@ -17,7 +17,7 @@ AccessToken = <fill-me>
 # DBtype = sqlite3
 #
 ## Data Source Name for the SQL database
-## for sqlite 3, DNdsn is ignored and created using the DBDirectory
+## for sqlite 3, DNdsn is ignored and auto created using the DBDirectory
 # DBdsn = file:{{ DBDirectory }}/sqlite3/data.sqlite3
 #
 ## for mysql
@@ -26,8 +26,13 @@ AccessToken = <fill-me>
 #
 ## for postgresql
 # DBdsn = postgres://username:password@localhost:5432/dbName
-# DBdsn = postgres://username:password@%2Fvar%2Frun%2Fpostgresql/dbName
+# DBdsn = postgres:///dbname?user=username&password=password&host=/var/run/postgresql
 
 ## defaults should be OK
 # PositiveEmojis = ❤️,👍️,💯,🍌,🎉,💞,💗,💓,💖,💘,💝,💕,😻,😍,❤️‍🔥
 # NegativeEmojis = 👎️,💔,😠,👿,🙁,☹️,🤬,☠️,💀
+
+## manual unveil of directories
+# comma separated list of <perms>:<data>
+# can be used for unix socket connections to SQL databases pwx/mysql
+# UnveilDirs = rwxc:/path/to/data,r:/some/more/paths\,with\,commas,rwc:/tmp
