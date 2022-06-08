@@ -17,26 +17,32 @@
 package lib
 
 import (
-	"fmt"
-	"regexp"
+	"strings"
 
 	"maunium.net/go/mautrix"
 	"maunium.net/go/mautrix/event"
 )
 
-func ReactionHandler(_ *mautrix.Client, source mautrix.EventSource, evt *event.Event, bdb *BDBStore, sqlDB *SQLStore) {
-	fmt.Printf("<%[1]s> %[4]s (%[2]s/%[3]s)\n", evt.Sender, evt.Type.String(), evt.ID, evt.Content.AsMessage().FormattedBody)
-
-	regex_arr := [4]string{`(?i)^thanks\s(.+)$`, `(?i)^thank you\s(.+)$`, `(?i)^(.+):\sthank you$`, `(?i)^(.+):\sthanks$`}
-
-	body := evt.Content.AsMessage().Body
-	for _, pat := range regex_arr {
-		re := regexp.MustCompile(pat)
-		if re.MatchString(body) {
-			person := re.ReplaceAllString(body, "$1")
-			fmt.Printf("person = %v\n", person)
-		} else {
-			fmt.Printf("no person found\n")
+func ReactionHandler(source mautrix.EventSource, evt *event.Event, kBot *KarmaBot) {
+	relatesTo := evt.Content.AsReaction().GetRelatesTo()
+	emoji := relatesTo.GetAnnotationKey()
+	senderID := evt.Sender.String()
+	targetEvent, err := kBot.mClient.GetEvent(evt.RoomID, relatesTo.EventID)
+	if err != nil {
+		kBot.logger.Warnf("Error while retrieving target event: %v", err)
+		return
+	}
+	targetID := targetEvent.Sender.String()
+	for _, pemoji := range strings.Split(kBot.kConf.PositiveEmojis, ",") {
+		if emoji == pemoji {
+			kBot.KarmaAdd(senderID, targetID, evt.ID.String(), evt.RoomID.String(), 1)
+			return
+		}
+	}
+	for _, nemoji := range strings.Split(kBot.kConf.NegativeEmojis, ",") {
+		if emoji == nemoji {
+			kBot.KarmaAdd(senderID, targetID, evt.ID.String(), evt.RoomID.String(), -1)
+			return
 		}
 	}
 }
