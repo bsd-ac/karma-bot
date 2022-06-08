@@ -1,3 +1,33 @@
 Homeserver = https://matrix-client.matrix.org
 Username = <fill-me>
 AccessToken = <fill-me>
+
+## whether to autojoin rooms and conversations on invite
+# Autojoin = false
+
+## how frequently to send response messages to queries (in microseconds)
+# ResponseFreq = 5000000  # 5s
+
+## directory where the data is stored
+# DBDirectory = /var/db/karma-bot
+
+##### Database configuration
+#
+## possible values = sqlite3, mysql, pgx
+# DBtype = sqlite3
+#
+## Data Source Name for the SQL database
+## for sqlite 3, DNdsn is ignored and created using the DBDirectory
+# DBdsn = file:{{ DBDirectory }}/sqlite3/data.sqlite3
+#
+## for mysql
+# DBdsn = username:password@tcp(localhost:3306)/dbName
+# DBdsn = username:password@unix(/var/run/mysql/mysql.sock)/dbName
+#
+## for postgresql
+# DBdsn = postgres://username:password@localhost:5432/dbName
+# DBdsn = postgres://username:password@%2Fvar%2Frun%2Fpostgresql/dbName
+
+## defaults should be OK
+# PositiveEmojis = ❤️,👍️,💯,🍌,🎉,💞,💗,💓,💖,💘,💝,💕,😻,😍,❤️‍🔥
+# NegativeEmojis = 👎️,💔,😠,👿,🙁,☹️,🤬,☠️,💀
