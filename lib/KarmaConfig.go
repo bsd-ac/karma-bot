@@ -54,8 +54,8 @@ func ReadConfig(ConfigFile string) (*KarmaConfig, error) {
 	cfg.Autojoin = false
 	cfg.DBDirectory = "/var/db/karma-bot"
 	cfg.ResponseFreq = 5000000 // 5 seconds
-	cfg.PositiveEmojis = ""
-	cfg.NegativeEmojis = ""
+	cfg.PositiveEmojis = "❤️,👍️,💯,🍌,🎉,💞,💗,💓,💖,💘,💝,💕,😻,😍,❤️‍🔥"
+	cfg.NegativeEmojis = "👎️,😢,💔,😠,👿,🙁,☹️,🤬,☠️,💀"
 
 	// valid SQL driver name: sqlite3, mysql, postgresql
 	cfg.DBtype = "sqlite3"
