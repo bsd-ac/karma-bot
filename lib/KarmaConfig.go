@@ -29,7 +29,6 @@ type KarmaConfig struct {
 	Username       string `ini:"Username"`
 	AccessToken    string `ini:"AccessToken"`
 	Homeserver     string `ini:"Homeserver"`
-	DebugLevel     int    `ini:"DebugLevel"`
 	Autojoin       bool   `ini:"Autojoin"`
 	DBDirectory    string `ini:"DBDirectory"`
 	DBtype         string `ini:"DBtype"`
@@ -50,7 +49,6 @@ func ReadConfig(ConfigFile string) (*KarmaConfig, error) {
 	cfg.Username = ""
 	cfg.AccessToken = ""
 	cfg.Homeserver = ""
-	cfg.DebugLevel = 0
 	cfg.Autojoin = false
 	cfg.DBDirectory = "/var/db/karma-bot"
 	cfg.ResponseFreq = 5000000 // 5 seconds
