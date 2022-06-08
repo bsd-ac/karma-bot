@@ -76,8 +76,6 @@ func (u *ThankYouBot) ProcessMessage(body string, source mautrix.EventSource, ev
 			targetID := groups[j][rind]
 			if targetID == "" {
 				continue
-			} else if targetID == senderID {
-				continue
 			} else {
 				kBot.KarmaAdd(senderID, targetID, evt.ID.String(), evt.RoomID.String(), 1)
 				found = true

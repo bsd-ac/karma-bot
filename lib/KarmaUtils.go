@@ -90,7 +90,7 @@ func (kBot *KarmaBot) GetKarmaTotal(userID string) int64 {
 }
 
 func (kBot *KarmaBot) KarmaAdd(senderID, targetID, eventID, roomID string, vote int64) {
-	if kBot.IsOptOut(senderID) || kBot.IsOptOut(targetID) {
+	if kBot.IsOptOut(senderID) || kBot.IsOptOut(targetID) || senderID == targetID {
 		return
 	}
 	query := `INSERT INTO events (senderID, targetID, eventID, roomID, vote) VALUES (?, ?, ?, ?, ?)`
