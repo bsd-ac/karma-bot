@@ -14,8 +14,8 @@ Karma bot for [Matrix](https://matrix.org/)
 On top of standard features which parse messages of the form `thanks <abcxyz>`, this bot also supports a few more enhancements
 
 - Support message reactions:
-  - positive emojis give karma: 👍, 💖
-  - negative emojis reduce karma: 👎, 💔
+  - positive emojis give karma: ❤️,👍️,💯,🍌,🎉,💞,💗,💓,💖,💘,💝,💕,😻,😍,❤️‍🔥
+  - negative emojis reduce karma: 👎️,💔,😠,👿,🙁,☹️,🤬,☠️,💀
   - removing the reactions removes the karma contribution
 - Per room and global karma stats
 - Ability to opt out/in of tracking: `!optout`, `!optin`
