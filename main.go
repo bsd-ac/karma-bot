@@ -64,7 +64,7 @@ func main() {
 	klog.Infof("Securing with pledge and unveil")
 	protect.Unveil("/etc/resolv.conf", "r")
 	protect.Unveil("/etc/ssl/cert.pem", "r")
-	protect.Unveil(kConf.DBDirectory, "rwxc")
+	protect.Unveil(kConf.DataDirectory, "rwxc")
 	for _, udir := range kConf.UnveilInfo {
 		klog.Infof("Unveiling manually specified paths '%s' - '%s'", udir.Dir, udir.Perms)
 		protect.Unveil(udir.Dir, udir.Perms)

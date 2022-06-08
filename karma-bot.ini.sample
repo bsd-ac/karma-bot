@@ -9,7 +9,7 @@ AccessToken = <fill-me>
 # ResponseFreq = 5000000  # 5s
 
 ## directory where the data is stored
-# DBDirectory = /var/db/karma-bot
+# DataDirectory = /var/db/karma-bot
 
 ##### Database configuration
 #
@@ -17,8 +17,8 @@ AccessToken = <fill-me>
 # DBtype = sqlite3
 #
 ## Data Source Name for the SQL database
-## for sqlite 3, DNdsn is ignored and auto created using the DBDirectory
-# DBdsn = file:{{ DBDirectory }}/sqlite3/data.sqlite3
+## for sqlite 3, DNdsn is ignored and auto created using the DataDirectory
+# DBdsn = file:{{ DataDirectory }}/sqlite3/data.sqlite3
 #
 ## for mysql
 # DBdsn = username:password@tcp(localhost:3306)/dbName

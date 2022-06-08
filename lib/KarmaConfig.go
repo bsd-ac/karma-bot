@@ -36,7 +36,7 @@ type KarmaConfig struct {
 	AccessToken    string   `ini:"AccessToken"`
 	Homeserver     string   `ini:"Homeserver"`
 	Autojoin       bool     `ini:"Autojoin"`
-	DBDirectory    string   `ini:"DBDirectory"`
+	DataDirectory    string   `ini:"DataDirectory"`
 	DBtype         string   `ini:"DBtype"`
 	DBdsn          string   `ini:"DBdsn"`
 	ResponseFreq   int64    `ini:"ResponseFreq"`
@@ -61,7 +61,7 @@ func ReadConfig(ConfigFile string) (*KarmaConfig, error) {
 	cfg.AccessToken = ""
 	cfg.Homeserver = ""
 	cfg.Autojoin = false
-	cfg.DBDirectory = "/var/db/karma-bot"
+	cfg.DataDirectory = "/var/db/karma-bot"
 	cfg.ResponseFreq = 5000000 // 5 seconds
 	cfg.PositiveEmojis = "❤️,👍️,💯,🍌,🎉,💞,💗,💓,💖,💘,💝,💕,😻,😍,❤️‍🔥"
 	cfg.NegativeEmojis = "👎️,💔,😠,👿,🙁,☹️,🤬,☠️,💀"
@@ -88,19 +88,19 @@ func ReadConfig(ConfigFile string) (*KarmaConfig, error) {
 		err = fmt.Errorf("Config file does not have 'AccessToken'")
 		goto failed
 	}
-	absDBDir, err = filepath.Abs(cfg.DBDirectory)
+	absDBDir, err = filepath.Abs(cfg.DataDirectory)
 	if err != nil {
-		err = fmt.Errorf("Could not get absolute path of DBDirectory (%s): %v", cfg.DBDirectory, err)
+		err = fmt.Errorf("Could not get absolute path of DataDirectory (%s): %v", cfg.DataDirectory, err)
 		goto failed
 	}
-	cfg.DBDirectory = absDBDir
-	dbDirStat, err = os.Stat(cfg.DBDirectory)
+	cfg.DataDirectory = absDBDir
+	dbDirStat, err = os.Stat(cfg.DataDirectory)
 	if os.IsNotExist(err) {
-		err = fmt.Errorf("Database directory '%s' does not exist", cfg.DBDirectory)
+		err = fmt.Errorf("Database directory '%s' does not exist", cfg.DataDirectory)
 		goto failed
 	}
 	if !dbDirStat.IsDir() {
-		err = fmt.Errorf("Path '%s' exists but is not a directory", cfg.DBDirectory)
+		err = fmt.Errorf("Path '%s' exists but is not a directory", cfg.DataDirectory)
 		goto failed
 	}
 
@@ -109,8 +109,8 @@ func ReadConfig(ConfigFile string) (*KarmaConfig, error) {
 		goto failed
 	}
 	if cfg.DBtype == "sqlite3" {
-		cfg.DBdsn = "file:" + filepath.Join(cfg.DBDirectory, "sqlite3", "data.sqlite3")
-		dataDir = filepath.Join(cfg.DBDirectory, "sqlite3")
+		cfg.DBdsn = "file:" + filepath.Join(cfg.DataDirectory, "sqlite3", "data.sqlite3")
+		dataDir = filepath.Join(cfg.DataDirectory, "sqlite3")
 		if _, err = os.Stat(dataDir); errors.Is(err, os.ErrNotExist) {
 			err = os.Mkdir(dataDir, os.ModePerm)
 			if err != nil {
@@ -119,7 +119,7 @@ func ReadConfig(ConfigFile string) (*KarmaConfig, error) {
 			}
 		}
 	}
-	bdbDir = filepath.Join(cfg.DBDirectory, "badger")
+	bdbDir = filepath.Join(cfg.DataDirectory, "badger")
 	if _, err = os.Stat(bdbDir); errors.Is(err, os.ErrNotExist) {
 		err = os.Mkdir(bdbDir, os.ModePerm)
 		if err != nil {
