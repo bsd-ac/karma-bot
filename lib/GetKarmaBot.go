@@ -43,17 +43,18 @@ func (u *GetKarmaBot) Re() *regexp.Regexp {
 }
 
 func (u *GetKarmaBot) ProcessMessage(body string, source mautrix.EventSource, evt *event.Event, kBot *KarmaBot) bool {
+	htmlBody := strings.TrimSpace(evt.Content.AsMessage().FormattedBody)
+	if htmlBody == "" {
+		htmlBody = body
+	}
 	rexp := u.Re()
 	if !rexp.MatchString(body){
 		return false
 	}
+	kBot.logger.Debugf("Calling GetKarmaBot: %s", htmlBody)
 	cli := kBot.mClient
-	htmlBody := strings.TrimSpace(evt.Content.AsMessage().FormattedBody)
-	kBot.logger.Debugf("Processing html '%s'", htmlBody)
 	href := rexp.ReplaceAllString(htmlBody, "$2")
-	kBot.logger.Debugf("Processing href '%s'", href)
 	targetID := HTMLToUserID(href)
-	kBot.logger.Debugf("Got userID '%s'", targetID)
 	targetID = strings.TrimSpace(targetID)
 	if targetID == "" {
 		kBot.logger.Warnf("Could not parse user from html, defaulting to sender")
@@ -67,6 +68,7 @@ func (u *GetKarmaBot) ProcessMessage(body string, source mautrix.EventSource, ev
 		}
 	}
 	targetID = strings.TrimSpace(targetID)
+	kBot.logger.Debugf("Got targetID as: %s", targetID)
 
 	msg := ""
 	optOut := kBot.IsOptOut(targetID)
@@ -77,7 +79,6 @@ func (u *GetKarmaBot) ProcessMessage(body string, source mautrix.EventSource, ev
 		var karma int64
 		if rexp.ReplaceAllString(htmlBody, "$1") == "total" {
 			karma = kBot.GetKarmaTotal(targetID)
-
 		} else {
 			karma = kBot.GetKarma(targetID, evt.RoomID.String())
 		}

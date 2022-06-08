@@ -54,25 +54,26 @@ func main() {
 	defer klog.Sync()
 	// only use klog as logger from here on
 
-	klog.Debugf("Reading config file '%s'", *config)
+	klog.Infof("Reading config file '%s'", *config)
 	kConf, err := lib.ReadConfig(*config)
 	if err != nil {
 		klog.Fatalf("Error while reading the config file: %s", err.Error())
 	}
-	klog.Debugf("Finished reading config file")
+	klog.Infof("Finished reading config file")
 
-	klog.Debugf("Securing with pledge and unveil")
+	klog.Infof("Securing with pledge and unveil")
 	protect.Unveil("/etc/resolv.conf", "r")
 	protect.Unveil("/etc/ssl/cert.pem", "r")
 	protect.Unveil(kConf.DBDirectory, "rwxc")
 	for _, udir := range kConf.UnveilInfo {
-		klog.Debugf("Unveiling manually specified directory '%s' - '%s'", udir.Dir, udir.Perms)
+		klog.Infof("Unveiling manually specified paths '%s' - '%s'", udir.Dir, udir.Perms)
 		protect.Unveil(udir.Dir, udir.Perms)
 	}
 	protect.UnveilBlock()
 	protect.Pledge("stdio rpath wpath cpath flock dns inet unix tty")
-	klog.Debugf("Finished securing")
+	klog.Infof("Finished securing")
 
+	klog.Infof("Starting the bot...")
 	kbot := lib.NewKarmaBot(kConf)
 
 	done := make(chan os.Signal, 1)
