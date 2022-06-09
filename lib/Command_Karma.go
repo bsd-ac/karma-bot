@@ -17,33 +17,29 @@
 package lib
 
 import (
-	"regexp"
+	"fmt"
 
-	"maunium.net/go/mautrix"
 	"maunium.net/go/mautrix/event"
+	"maunium.net/go/mautrix/format"
 )
 
-type OptOutBot struct {
+type Command_Karma struct {
 }
 
-func (u *OptOutBot) ID() string {
-	return "OptOutBot"
+func (u *Command_Karma) NeedsTimer() bool {
+	return true
 }
 
-func (u *OptOutBot) NeedsTimer() bool {
-	return false
-}
-
-func (u *OptOutBot) Re() *regexp.Regexp {
-	return regexp.MustCompile(`(?i)^\!optout\s*$`)
-}
-
-func (u *OptOutBot) ProcessMessage(body string, source mautrix.EventSource, evt *event.Event, kBot *KarmaBot) bool {
-	rexp := u.Re()
-	if !rexp.MatchString(body) {
-		return false
+func (u *Command_Karma) Process(evt *event.Event, kBot *KarmaBot, targetID, targetHREF string) bool {
+	optOut := kBot.IsOptOut(targetID)
+	msg := ""
+	if optOut {
+		msg = "Unknown user"
+	} else {
+		karma := kBot.GetKarma(targetID, evt.RoomID.String())
+		msg = fmt.Sprintf("Current karma for %s: %d", targetHREF, karma)
 	}
-	senderID := evt.Sender.String()
-	kBot.OptOut(senderID)
+	msgHTML := format.RenderMarkdown(msg, true, true)
+	kBot.mClient.SendMessageEvent(evt.RoomID, event.EventMessage, &msgHTML)
 	return true
 }

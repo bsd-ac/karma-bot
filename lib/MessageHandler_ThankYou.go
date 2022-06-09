@@ -18,35 +18,33 @@ package lib
 
 import (
 	"regexp"
-	"strings"
 
-	"maunium.net/go/mautrix"
 	"maunium.net/go/mautrix/event"
 )
 
-type ThankYouBot struct {
+type MessageHandler_ThankYou struct {
 }
 
-func (u *ThankYouBot) ID() string {
-	return "ThankYouBot"
-}
-
-func (u *ThankYouBot) NeedsTimer() bool {
+func (u *MessageHandler_ThankYou) NeedsTimer() bool {
 	return false
 }
 
-func (u *ThankYouBot) Re() []*regexp.Regexp {
+func (u *MessageHandler_ThankYou) FastMatch(body, bodyHTML string) bool {
+	return bodyHTML != "" && regexp.MustCompile(`(?i)\bthank(s)?\b`).MatchString(body)
+}
+
+func (u *MessageHandler_ThankYou) Re() []*regexp.Regexp {
 	return []*regexp.Regexp{
 		regexp.MustCompile(`(?i)(thanks(\s+a\s+(lot|bunch))?|thank\s+you(\s+very\s+much)?)\s+(<a\s+href=".+/(.+)">.+</a>)`),
 		regexp.MustCompile(`(?i)(<a\s+href=".+/(.+)">.+</a>)(\s*:\s*)?\s*(thanks(\s+a\s+(lot|bunch))?|thank\s+you(\s+very\s+much)?|\++)`),
 	}
 }
 
-func (u *ThankYouBot) ReIndex() []int {
+func (u *MessageHandler_ThankYou) ReIndex() []int {
 	return []int{6, 2}
 }
 
-func (u *ThankYouBot) MatchMessage(body string) bool {
+func (u *MessageHandler_ThankYou) MatchMessage(body string) bool {
 	rexp_arr := u.Re()
 	for _, rexp := range rexp_arr {
 		if rexp.MatchString(body) {
@@ -56,20 +54,16 @@ func (u *ThankYouBot) MatchMessage(body string) bool {
 	return false
 }
 
-func (u *ThankYouBot) ProcessMessage(body string, source mautrix.EventSource, evt *event.Event, kBot *KarmaBot) bool {
-	htmlBody := strings.TrimSpace(evt.Content.AsMessage().FormattedBody)
-	if htmlBody == "" {
-		htmlBody = body
-	}
-	if !u.MatchMessage(htmlBody){
+func (u *MessageHandler_ThankYou) ProcessMessage(evt *event.Event, kBot *KarmaBot, body, bodyHTML string) bool {
+	if bodyHTML == "" {
 		return false
 	}
-	kBot.logger.Infof("Called ThankYouBot")
+	kBot.logger.Infof("Called MessageHandler_ThankYou")
 	rexp_arr := u.Re()
 	rind_arr := u.ReIndex()
 	senderID := evt.Sender.String()
 	for i, rexp := range rexp_arr {
-		groups := rexp.FindAllStringSubmatch(htmlBody, -1)
+		groups := rexp.FindAllStringSubmatch(bodyHTML, -1)
 		rind := rind_arr[i]
 		found := false
 		for j := 0; j < len(groups); j++ {

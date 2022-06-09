@@ -17,38 +17,17 @@
 package lib
 
 import (
-	"fmt"
-	"regexp"
-	"time"
-
-	"maunium.net/go/mautrix"
 	"maunium.net/go/mautrix/event"
 )
 
-type UptimeBot struct {
+type Command_OptIn struct {
 }
 
-func (u *UptimeBot) ID() string {
-	return "UptimeBot"
+func (u *Command_OptIn) NeedsTimer() bool {
+	return false
 }
 
-func (u *UptimeBot) NeedsTimer() bool {
-	return true
-}
-
-func (u *UptimeBot) Re() *regexp.Regexp {
-	return regexp.MustCompile(`(?i)^\!uptime\s*$`)
-}
-
-func (u *UptimeBot) ProcessMessage(body string, source mautrix.EventSource, evt *event.Event, kBot *KarmaBot) bool {
-	rexp := u.Re()
-	if !rexp.MatchString(body){
-		return false
-	}
-	kBot.logger.Debugf("Calling UptimeBot")
-	tnow := time.Now()
-	tdiff := tnow.Sub(BotStartTime)
-	cli := kBot.mClient
-	cli.SendText(evt.RoomID, fmt.Sprintf("I have been up for %v\n", tdiff.String()))
-	return true
+func (u *Command_OptIn) Process(evt *event.Event, kBot *KarmaBot, targetID, targetHREF string) bool {
+	kBot.OptIn(evt.Sender.String())
+	return false
 }
