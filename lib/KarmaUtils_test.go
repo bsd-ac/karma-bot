@@ -17,8 +17,8 @@
 package lib
 
 import (
-	"path/filepath"
 	"os"
+	"path/filepath"
 	"testing"
 )
 
@@ -31,7 +31,7 @@ func TestKarmaUtils(t *testing.T) {
 	defer os.RemoveAll(dbDir)
 
 	bLogger := NewBotLogger()
-	sqlStore, err := NewSQLStore("sqlite3", "file:" + filepath.Join(dbDir, "data.sqlite3"), bLogger)
+	sqlStore, err := NewSQLStore("sqlite3", "file:"+filepath.Join(dbDir, "data.sqlite3"), bLogger)
 	if err != nil {
 		t.Fatal(err)
 	}

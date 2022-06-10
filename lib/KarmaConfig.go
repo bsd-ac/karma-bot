@@ -36,7 +36,7 @@ type KarmaConfig struct {
 	AccessToken    string   `ini:"AccessToken"`
 	Homeserver     string   `ini:"Homeserver"`
 	Autojoin       bool     `ini:"Autojoin"`
-	DataDirectory    string   `ini:"DataDirectory"`
+	DataDirectory  string   `ini:"DataDirectory"`
 	DBtype         string   `ini:"DBtype"`
 	DBdsn          string   `ini:"DBdsn"`
 	ResponseFreq   int64    `ini:"ResponseFreq"`
