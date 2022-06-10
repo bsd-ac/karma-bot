@@ -37,7 +37,7 @@ func (u *Command_KarmaTotal) Process(evt *event.Event, kBot *KarmaBot, targetID,
 		msg = "Unknown user"
 	} else {
 		karma := kBot.GetKarmaTotal(targetID)
-		msg = fmt.Sprintf("Current karma for %s: %d", targetHREF, karma)
+		msg = fmt.Sprintf("Current total karma for %s: %d", targetHREF, karma)
 	}
 	msgHTML := format.RenderMarkdown(msg, true, true)
 	kBot.mClient.SendMessageEvent(evt.RoomID, event.EventMessage, &msgHTML)

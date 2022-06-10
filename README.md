@@ -22,14 +22,14 @@ On top of standard features which parse messages of the form `thanks <abcxyz>`, 
 
 ## Commands
 
-| command              | notes                                                                                                                   |
-|----------------------|-------------------------------------------------------------------------------------------------------------------------|
-| `!karma [user]`      | get karma of a user in a room, defaults to sender if user is not specified                                              |
-| `!karmatotal [user]` | get karma of a user across all rooms, defaults to sender if user is not specified                                       |
-| `!optin`             | remove the sender from the karma tracking system (all votes give to and by the sender are deleted and permanently lost) |
-| `!optout`            | allow the sender to be tracked in the karma tracking system (past events are not tracked)                               |
-| `!optstatus [user]`  | check if a user has opted in/out of the karma tracking system                                                           |
-| `!uptime`            | check how long the bot has been up                                                                                      |
+| command             | notes                                                                                                                   |
+|---------------------|-------------------------------------------------------------------------------------------------------------------------|
+| `!karma [user]`     | get karma of a user in a room, defaults to sender if user is not specified                                              |
+| `!tkarma [user]`    | get karma of a user across all rooms, defaults to sender if user is not specified                                       |
+| `!optin`            | remove the sender from the karma tracking system (all votes give to and by the sender are deleted and permanently lost) |
+| `!optout`           | allow the sender to be tracked in the karma tracking system (past events are not tracked)                               |
+| `!optstatus [user]` | check if a user has opted in/out of the karma tracking system                                                           |
+| `!uptime`           | check how long the bot has been up                                                                                      |
 
 ## Usage
 

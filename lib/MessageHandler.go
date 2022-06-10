@@ -34,7 +34,7 @@ type KarmaCommand interface {
 
 var KarmaCommands = map[string]KarmaCommand{
 	"karma":     &Command_Karma{},
-	"karmat":    &Command_KarmaTotal{},
+	"tkarma":    &Command_KarmaTotal{},
 	"optin":     &Command_OptIn{},
 	"optout":    &Command_OptOut{},
 	"optstatus": &Command_OptStatus{},
